@@ -466,6 +466,14 @@ class RedisCluster : public RedisServer
         DBNode* _get_model_script_db(const std::string& name,
                                      std::vector<std::string>& inputs,
                                      std::vector<std::string>& outputs);
+
+        /*!
+        *   \brief  Selects the model/script execution location
+        *           based on the highest tensor locality density
+        *   \param inputs The keys of inputs tensors to use
+        *                 in the model
+        */
+        DBNode* _select_model_script_exec_loc(std::vector<std::string>& inputs);
 };
 
 } //namespace SmartRedis

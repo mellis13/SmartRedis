@@ -444,6 +444,7 @@ CommandReply RedisCluster::run_model_pipe(const std::string& key,
                              "}." + std::string(key);
     Command cmd;
     CommandReply reply;
+    /*
     cmd.add_field("AI.DAGRUN");
     cmd.add_field("LOAD");
     cmd.add_field(std::to_string(inputs.size()));
@@ -458,7 +459,13 @@ CommandReply RedisCluster::run_model_pipe(const std::string& key,
     cmd.add_fields(tmp_inputs);
     cmd.add_field("OUTPUTS");
     cmd.add_fields(tmp_outputs);
-
+    */
+    cmd.add_field("AI.MODELRUN");
+    cmd.add_field(model_name, true);
+    cmd.add_field("INPUTS");
+    cmd.add_fields(tmp_inputs);
+    cmd.add_field("OUTPUTS");
+    cmd.add_fields(tmp_outputs);
     /*
     *
     *
@@ -573,6 +580,7 @@ CommandReply RedisCluster::run_script_pipe(const std::string& key,
                              "}." + std::string(key);
     Command cmd;
     CommandReply reply;
+    /*
     cmd.add_field("AI.DAGRUN");
     cmd.add_field("LOAD");
     cmd.add_field(std::to_string(inputs.size()));
@@ -588,7 +596,14 @@ CommandReply RedisCluster::run_script_pipe(const std::string& key,
     cmd.add_fields(tmp_inputs);
     cmd.add_field("OUTPUTS");
     cmd.add_fields(tmp_outputs);
-
+    */
+    cmd.add_field("AI.SCRIPTRUN");
+    cmd.add_field(script_name, true);
+    cmd.add_field(function);
+    cmd.add_field("INPUTS");
+    cmd.add_fields(tmp_inputs);
+    cmd.add_field("OUTPUTS");
+    cmd.add_fields(tmp_outputs);
     /*
     *
     *
