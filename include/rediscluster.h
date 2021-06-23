@@ -253,6 +253,21 @@ class RedisCluster : public RedisServer
                                        std::vector<std::string> outputs);
 
         /*!
+        *   \brief Run a model in the database using the
+        *          specificed input and output tensors
+        *   \param key The key associated with the model
+        *   \param inputs The keys of inputs tensors to use
+        *                 in the model
+        *   \param outputs The keys of output tensors that
+        *                 will be used to save model results
+        *   \returns The CommandReply from the run model server
+        *            Command
+        */
+        virtual CommandReply run_model_pipe(const std::string& key,
+                                            std::vector<std::string> inputs,
+                                            std::vector<std::string> outputs);
+
+        /*!
         *   \brief Run a script function in the database using the
         *          specificed input and output tensors
         *   \param key The key associated with the script
@@ -268,6 +283,23 @@ class RedisCluster : public RedisServer
                                         const std::string& function,
                                         std::vector<std::string> inputs,
                                         std::vector<std::string> outputs);
+
+        /*!
+        *   \brief Run a script function in the database using the
+        *          specificed input and output tensors
+        *   \param key The key associated with the script
+        *   \param function The name of the function in the script to run
+        *   \param inputs The keys of inputs tensors to use
+        *                 in the script
+        *   \param outputs The keys of output tensors that
+        *                 will be used to save script results
+        *   \returns The CommandReply from script run Command
+        *            execution
+        */
+        virtual CommandReply run_script_pipe(const std::string& key,
+                                             const std::string& function,
+                                             std::vector<std::string> inputs,
+                                             std::vector<std::string> outputs);
 
         /*!
         *   \brief Retrieve the model from the database

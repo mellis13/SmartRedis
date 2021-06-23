@@ -333,7 +333,7 @@ CommandReply RedisCluster::run_model(const std::string& key,
         have the same random number across all ranks.  Instead
         We will choose it based on the db of the first input tensor.
     */
-
+    /*
     uint16_t hash_slot = this->_get_hash_slot(inputs[0]);
     uint16_t db_index = this->_get_dbnode_index(hash_slot, 0,
                                                 this->_db_nodes.size()-1);
@@ -374,6 +374,267 @@ CommandReply RedisCluster::run_model(const std::string& key,
     this->_delete_keys(keys_to_delete);
 
     return reply;
+    */
+    this->run_model_pipe(key, inputs, outputs);
+    return CommandReply();
+}
+
+CommandReply RedisCluster::run_model_pipe(const std::string& key,
+                                          std::vector<std::string> inputs,
+                                          std::vector<std::string> outputs)
+{
+
+    if(inputs.size()!=1 || outputs.size()!=1)
+        throw std::runtime_error("This prototype only works with inputs "
+                                 "and outputs of size 1.");
+
+    uint16_t hash_slot = this->_get_hash_slot(inputs[0]);
+    uint16_t db_index = this->_get_dbnode_index(hash_slot, 0,
+                                                this->_db_nodes.size()-1);
+
+    DBNode* db = &(this->_db_nodes[db_index]);
+
+    sw::redis::Pipeline pipe = this->_redis_cluster->pipeline(db->prefix, false);
+
+    //Generate temporary names so that all keys go to same slot
+    std::vector<std::string> tmp_inputs =
+        _get_tmp_names(inputs, db->prefix);
+    std::vector<std::string> tmp_outputs =
+        _get_tmp_names(outputs, db->prefix);
+
+    /*
+    *
+    *   COPY INPUT TENSORS
+    *
+    */
+    //Copy all input tensors to temporary names to align hash slots
+    CommandReply cmd_get_reply;
+    Command cmd_get;
+
+    cmd_get.add_field("AI.TENSORGET");
+    cmd_get.add_field(inputs[0], true);
+    cmd_get.add_field("META");
+    cmd_get.add_field("BLOB");
+    cmd_get_reply = this->run(cmd_get);
+
+    std::vector<size_t> dims =
+        CommandReplyParser::get_tensor_dims(cmd_get_reply);
+    std::string_view blob =
+        CommandReplyParser::get_tensor_data_blob(cmd_get_reply);
+    TensorType type =
+        CommandReplyParser::get_tensor_data_type(cmd_get_reply);
+
+    CommandReply cmd_put_reply;
+    Command cmd_put;
+
+    cmd_put.add_field("AI.TENSORSET");
+    cmd_put.add_field(tmp_inputs[0], true);
+    cmd_put.add_field(TENSOR_STR_MAP.at(type));
+    cmd_put.add_fields(dims);
+    cmd_put.add_field("BLOB");
+    cmd_put.add_field_ptr(blob);
+
+    /*
+    *
+    *
+    *   Run model
+    *
+    */
+    std::string model_name = "{" + db->prefix +
+                             "}." + std::string(key);
+    Command cmd;
+    CommandReply reply;
+    cmd.add_field("AI.DAGRUN");
+    cmd.add_field("LOAD");
+    cmd.add_field(std::to_string(inputs.size()));
+    cmd.add_fields(tmp_inputs);
+    cmd.add_field("PERSIST");
+    cmd.add_field(std::to_string(outputs.size()));
+    cmd.add_fields(tmp_outputs);
+    cmd.add_field("|>");
+    cmd.add_field("AI.MODELRUN");
+    cmd.add_field(model_name, true);
+    cmd.add_field("INPUTS");
+    cmd.add_fields(tmp_inputs);
+    cmd.add_field("OUTPUTS");
+    cmd.add_fields(tmp_outputs);
+
+    /*
+    *
+    *
+    *   Copy output tensors
+    *
+    */
+    CommandReply cmd_get_output_reply;
+    Command cmd_get_output;
+
+    cmd_get_output.add_field("AI.TENSORGET");
+    cmd_get_output.add_field(tmp_outputs[0], true);
+    cmd_get_output.add_field("META");
+    cmd_get_output.add_field("BLOB");
+
+    Command cmd_del;
+    cmd_del.add_field("DEL");
+    cmd_del.add_field(tmp_inputs[0]);
+    cmd_del.add_field(tmp_outputs[0]);
+
+    pipe.command(cmd_put.begin(), cmd_put.end());
+    pipe.command(cmd.begin(), cmd.end());
+    pipe.command(cmd_get_output.begin(), cmd_get_output.end());
+    pipe.command(cmd_del.begin(), cmd_del.end());
+    sw::redis::QueuedReplies pipe_reply = pipe.exec();
+
+    //TODO
+    //Still need to set output TENSOR
+    redisReply& redis_reply = pipe_reply.get(2);
+    CommandReply tmp_output_reply;
+    tmp_output_reply = &redis_reply;
+
+    dims =
+        CommandReplyParser::get_tensor_dims(tmp_output_reply);
+    blob =
+        CommandReplyParser::get_tensor_data_blob(tmp_output_reply);
+    type =
+        CommandReplyParser::get_tensor_data_type(tmp_output_reply);
+
+    Command cmd_put_o;
+    cmd_put_o.add_field("AI.TENSORSET");
+    cmd_put_o.add_field(outputs[0], true);
+    cmd_put_o.add_field(TENSOR_STR_MAP.at(type));
+    cmd_put_o.add_fields(dims);
+    cmd_put_o.add_field("BLOB");
+    cmd_put_o.add_field_ptr(blob);
+    return this->run(cmd_put_o);
+}
+
+CommandReply RedisCluster::run_script_pipe(const std::string& key,
+                                           const std::string& function,
+                                           std::vector<std::string> inputs,
+                                           std::vector<std::string> outputs)
+{
+
+    if(inputs.size()!=1 || outputs.size()!=1)
+        throw std::runtime_error("This prototype only works with inputs "
+                                 "and outputs of size 1.");
+
+    uint16_t hash_slot = this->_get_hash_slot(inputs[0]);
+    uint16_t db_index = this->_get_dbnode_index(hash_slot, 0,
+                                                this->_db_nodes.size()-1);
+
+    DBNode* db = &(this->_db_nodes[db_index]);
+
+    sw::redis::Pipeline pipe = this->_redis_cluster->pipeline(db->prefix, false);
+
+    //Generate temporary names so that all keys go to same slot
+    std::vector<std::string> tmp_inputs =
+        _get_tmp_names(inputs, db->prefix);
+    std::vector<std::string> tmp_outputs =
+        _get_tmp_names(outputs, db->prefix);
+
+    /*
+    *
+    *   COPY INPUT TENSORS
+    *
+    */
+    //Copy all input tensors to temporary names to align hash slots
+    CommandReply cmd_get_reply;
+    Command cmd_get;
+
+    cmd_get.add_field("AI.TENSORGET");
+    cmd_get.add_field(inputs[0], true);
+    cmd_get.add_field("META");
+    cmd_get.add_field("BLOB");
+    cmd_get_reply = this->run(cmd_get);
+
+    std::vector<size_t> dims =
+        CommandReplyParser::get_tensor_dims(cmd_get_reply);
+    std::string_view blob =
+        CommandReplyParser::get_tensor_data_blob(cmd_get_reply);
+    TensorType type =
+        CommandReplyParser::get_tensor_data_type(cmd_get_reply);
+
+    CommandReply cmd_put_reply;
+    Command cmd_put;
+
+    cmd_put.add_field("AI.TENSORSET");
+    cmd_put.add_field(tmp_inputs[0], true);
+    cmd_put.add_field(TENSOR_STR_MAP.at(type));
+    cmd_put.add_fields(dims);
+    cmd_put.add_field("BLOB");
+    cmd_put.add_field_ptr(blob);
+
+    /*
+    *
+    *
+    *   Run model
+    *
+    */
+    std::string script_name = "{" + db->prefix +
+                             "}." + std::string(key);
+    Command cmd;
+    CommandReply reply;
+    cmd.add_field("AI.DAGRUN");
+    cmd.add_field("LOAD");
+    cmd.add_field(std::to_string(inputs.size()));
+    cmd.add_fields(tmp_inputs);
+    cmd.add_field("PERSIST");
+    cmd.add_field(std::to_string(outputs.size()));
+    cmd.add_fields(tmp_outputs);
+    cmd.add_field("|>");
+    cmd.add_field("AI.SCRIPTRUN");
+    cmd.add_field(script_name, true);
+    cmd.add_field(function);
+    cmd.add_field("INPUTS");
+    cmd.add_fields(tmp_inputs);
+    cmd.add_field("OUTPUTS");
+    cmd.add_fields(tmp_outputs);
+
+    /*
+    *
+    *
+    *   Copy output tensors
+    *
+    */
+    CommandReply cmd_get_output_reply;
+    Command cmd_get_output;
+
+    cmd_get_output.add_field("AI.TENSORGET");
+    cmd_get_output.add_field(tmp_outputs[0], true);
+    cmd_get_output.add_field("META");
+    cmd_get_output.add_field("BLOB");
+
+    Command cmd_del;
+    cmd_del.add_field("DEL");
+    cmd_del.add_field(tmp_inputs[0]);
+    cmd_del.add_field(tmp_outputs[0]);
+
+    pipe.command(cmd_put.begin(), cmd_put.end());
+    pipe.command(cmd.begin(), cmd.end());
+    pipe.command(cmd_get_output.begin(), cmd_get_output.end());
+    pipe.command(cmd_del.begin(), cmd_del.end());
+    sw::redis::QueuedReplies pipe_reply = pipe.exec();
+
+    //TODO
+    //Still need to set output TENSOR
+    redisReply& redis_reply = pipe_reply.get(2);
+    CommandReply tmp_output_reply;
+    tmp_output_reply = &redis_reply;
+
+    dims =
+        CommandReplyParser::get_tensor_dims(tmp_output_reply);
+    blob =
+        CommandReplyParser::get_tensor_data_blob(tmp_output_reply);
+    type =
+        CommandReplyParser::get_tensor_data_type(tmp_output_reply);
+
+    Command cmd_put_o;
+    cmd_put_o.add_field("AI.TENSORSET");
+    cmd_put_o.add_field(outputs[0], true);
+    cmd_put_o.add_field(TENSOR_STR_MAP.at(type));
+    cmd_put_o.add_fields(dims);
+    cmd_put_o.add_field("BLOB");
+    cmd_put_o.add_field_ptr(blob);
+    return this->run(cmd_put_o);
 }
 
 CommandReply RedisCluster::run_script(const std::string& key,
@@ -381,6 +642,7 @@ CommandReply RedisCluster::run_script(const std::string& key,
                                       std::vector<std::string> inputs,
                                       std::vector<std::string> outputs)
 {
+    /*
     uint16_t hash_slot = this->_get_hash_slot(inputs[0]);
     uint16_t db_index = this->_get_dbnode_index(hash_slot, 0,
                                                 this->_db_nodes.size()-1);
@@ -420,6 +682,8 @@ CommandReply RedisCluster::run_script(const std::string& key,
 
     this->_delete_keys(keys_to_delete);
     return reply;
+    */
+    return this->run_script_pipe(key, function, inputs, outputs);
 }
 
 CommandReply RedisCluster::get_model(const std::string& key)
