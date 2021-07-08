@@ -218,14 +218,10 @@ class RedisServer {
         *                 in the model
         *   \param outputs The keys of output tensors that
         *                 will be used to save model results
-        *   \returns The CommandReply from a Command
-        *            execution in the model run execution.
-        *            Different implementations may have different
-        *            sequences of commands.
         */
-        virtual CommandReply run_model(const std::string& key,
-                                       std::vector<std::string> inputs,
-                                       std::vector<std::string> outputs) = 0;
+        virtual void run_model(const std::string& key,
+                               std::vector<std::string> inputs,
+                               std::vector<std::string> outputs) = 0;
 
         /*!
         *   \brief Run a script function in the database using the
@@ -236,16 +232,12 @@ class RedisServer {
         *                 in the script
         *   \param outputs The keys of output tensors that
         *                 will be used to save script results
-        *   \returns The CommandReply from a Command
-        *            execution in the script run execution.
-        *            Different implementations may have different
-        *            sequences of commands.
         */
-        virtual CommandReply run_script(const std::string& key,
-                                        const std::string& function,
-                                        std::vector<std::string> inputs,
-                                        std::vector<std::string> outputs)
-                                         = 0;
+        virtual void run_script(const std::string& key,
+                                const std::string& function,
+                                std::vector<std::string> inputs,
+                                std::vector<std::string> outputs)
+                                = 0;
 
         /*!
         *   \brief Retrieve the model from the database

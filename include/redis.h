@@ -241,9 +241,9 @@ class Redis : public RedisServer
         *   \returns The CommandReply from the run model server
         *            Command
         */
-        virtual CommandReply run_model(const std::string& key,
-                                       std::vector<std::string> inputs,
-                                       std::vector<std::string> outputs);
+        virtual void run_model(const std::string& key,
+                               std::vector<std::string> inputs,
+                               std::vector<std::string> outputs);
 
         /*!
         *   \brief Run a script function in the database using the
@@ -257,10 +257,10 @@ class Redis : public RedisServer
         *   \returns The CommandReply from script run Command
         *            execution
         */
-        virtual CommandReply run_script(const std::string& key,
-                                        const std::string& function,
-                                        std::vector<std::string> inputs,
-                                        std::vector<std::string> outputs);
+        virtual void run_script(const std::string& key,
+                                const std::string& function,
+                                std::vector<std::string> inputs,
+                                std::vector<std::string> outputs);
 
         /*!
         *   \brief Retrieve the model from the database

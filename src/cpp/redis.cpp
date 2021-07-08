@@ -270,9 +270,9 @@ CommandReply Redis::set_script(const std::string& key,
     return this->run(cmd);
 }
 
-CommandReply Redis::run_model(const std::string& key,
-                              std::vector<std::string> inputs,
-                              std::vector<std::string> outputs)
+void Redis::run_model(const std::string& key,
+                      std::vector<std::string> inputs,
+                      std::vector<std::string> outputs)
 {
     Command cmd;
     cmd.add_field("AI.MODELRUN");
@@ -281,13 +281,14 @@ CommandReply Redis::run_model(const std::string& key,
     cmd.add_fields(inputs);
     cmd.add_field("OUTPUTS");
     cmd.add_fields(outputs);
-    return this->run(cmd);
+    this->run(cmd);
+    return;
 }
 
-CommandReply Redis::run_script(const std::string& key,
-                              const std::string& function,
-                              std::vector<std::string> inputs,
-                              std::vector<std::string> outputs)
+void Redis::run_script(const std::string& key,
+                       const std::string& function,
+                       std::vector<std::string> inputs,
+                       std::vector<std::string> outputs)
 {
     Command cmd;
     cmd.add_field("AI.SCRIPTRUN");
@@ -297,7 +298,8 @@ CommandReply Redis::run_script(const std::string& key,
     cmd.add_fields(inputs);
     cmd.add_field("OUTPUTS");
     cmd.add_fields(outputs);
-    return this->run(cmd);
+    this->run(cmd);
+    return;
 }
 
 CommandReply Redis::get_model(const std::string& key)

@@ -245,12 +245,10 @@ class RedisCluster : public RedisServer
         *                 in the model
         *   \param outputs The keys of output tensors that
         *                 will be used to save model results
-        *   \returns The CommandReply from the run model server
-        *            Command
         */
-        virtual CommandReply run_model(const std::string& key,
-                                       std::vector<std::string> inputs,
-                                       std::vector<std::string> outputs);
+        virtual void run_model(const std::string& key,
+                               std::vector<std::string> inputs,
+                               std::vector<std::string> outputs);
 
         /*!
         *   \brief Run a script function in the database using the
@@ -261,13 +259,11 @@ class RedisCluster : public RedisServer
         *                 in the script
         *   \param outputs The keys of output tensors that
         *                 will be used to save script results
-        *   \returns The CommandReply from script run Command
-        *            execution
         */
-        virtual CommandReply run_script(const std::string& key,
-                                        const std::string& function,
-                                        std::vector<std::string> inputs,
-                                        std::vector<std::string> outputs);
+        virtual void run_script(const std::string& key,
+                                const std::string& function,
+                                std::vector<std::string> inputs,
+                                std::vector<std::string> outputs);
 
         /*!
         *   \brief Retrieve the model from the database
@@ -431,9 +427,86 @@ class RedisCluster : public RedisServer
         *   \param outputs The keys of output tensors that
         *                 will be used to save model results
         */
-        DBNode* _get_model_script_db(const std::string& name,
-                                     std::vector<std::string>& inputs,
+        DBNode* _get_model_script_db(std::vector<std::string>& inputs,
                                      std::vector<std::string>& outputs);
+
+        /*!
+        *   \brief Generate a set of keys that are localized to the
+        *          database node.
+        *   \param db Database node that is used to localize keys.
+        *   \param keys The keys to manipulate and localize
+        *   \returns A vector of keys manipulated (localized) to
+        *            the database
+        */
+        std::vector<std::string> _generate_local_keys(DBNode* db,
+                                                      std::vector<std::string>& keys);
+
+        /*!
+        *   \brief  Prepare the commands for localizing tensor
+        *           data.  This function will retrieve tensors
+        *           and prepare the AI.TENSORSET commands
+        *           that will localize tensors using the
+        *           localized_keys input.
+        *   \param keys Input tensor names
+        *   \param localized_keys The localized tensors names
+        *   \param cmds A CommandList reference to which
+        *               commands will be added.
+        */
+        void _add_localize_tensor_commands(const std::vector<std::string>& keys,
+                                           const std::vector<std::string>& localized_keys,
+                                           CommandList& cmds);
+
+        /*!
+        *   \brief  Create the MODELRUN Command and append it to
+        *           the provided CommandList.
+        *   \param model_name The name of the model
+        *   \param local_inputs Localized input tensor keys
+        *   \param local_ouputs Localized output tensor keys
+        *   \param cmds The CommandList to add the model run Command
+        */
+        void _add_model_run_command(const std::string& model_name,
+                                    const std::vector<std::string>& local_inputs,
+                                    const std::vector<std::string>& local_outputs,
+                                    CommandList& cmds);
+
+        /*!
+        *   \brief  Create the SCRIPTRUN Command and append it to
+        *           the provided CommandList.
+        *   \param model_name The name of the script
+        *   \param function_name The name of the function
+        *   \param local_inputs Localized input tensor keys
+        *   \param local_ouputs Localized output tensor keys
+        *   \param cmds The CommandList to add the model run Command
+        */
+        void _add_script_run_command(const std::string& script_name,
+                                     const std::string& function_name,
+                                     const std::vector<std::string>& local_inputs,
+                                     const std::vector<std::string>& local_outputs,
+                                     CommandList& cmds);
+
+        /*!
+        *   \brief  Prepare the commands for retrieving temporary local
+        *           keys.  For any key in local_keys that does not match
+        *           keys, a Command to retreive the mismatching local_key
+        *           is added to the provided CommandList.
+        *   \param keys A vector of keys
+        *   \param local_keys A vector of local keys
+        *   \param cmds A CommandList to which Command are added
+        */
+        void _add_retrieve_localized_tensor_commands(const std::vector<std::string>& keys,
+                                                     const std::vector<std::string>& local_keys,
+                                                     CommandList& cmds);
+
+        /*!
+        *   \brief  Prepare the Command for removing localized keys
+        *   \param keys A vector of keys
+        *   \param local_keys A vector of local keys
+        *   \param cmds A CommandList to which Command are added
+        */
+        void _add_delete_localized_keys_commands(const std::vector<std::string>& keys,
+                                                 const std::vector<std::string>& local_keys,
+                                                 CommandList& cmds);
+
 };
 
 } //namespace SmartRedis

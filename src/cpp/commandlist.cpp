@@ -65,3 +65,8 @@ CommandList::const_iterator CommandList::cend()
 {
     return this->_commands.cend();
 }
+
+size_t CommandList::size()
+{
+    return this->_commands.size();
+}

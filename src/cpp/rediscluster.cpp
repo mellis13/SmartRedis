@@ -61,9 +61,8 @@ CommandReply RedisCluster::run(Command& cmd)
     CommandReply reply;
 
     int n_trials = 100;
-    bool success = true;
 
-    while (n_trials > 0 && success) {
+    while (n_trials > 0) {
 
         try {
             sw::redis::Redis db = this->_redis_cluster->redis(sv_prefix, false);
@@ -88,10 +87,7 @@ CommandReply RedisCluster::run(Command& cmd)
         }
     }
 
-    if (n_trials == 0)
-        success = false;
-
-    if (!success) {
+    if (n_trials==0) {
         if(reply.has_error()>0)
             reply.print_reply_error();
         throw std::runtime_error("Redis failed to execute command: " +
@@ -99,7 +95,6 @@ CommandReply RedisCluster::run(Command& cmd)
     }
 
     return reply;
-
 }
 
 CommandReply RedisCluster::run(CommandList& cmds)
@@ -323,103 +318,268 @@ CommandReply RedisCluster::set_script(const std::string& key,
     return reply;
 }
 
-CommandReply RedisCluster::run_model(const std::string& key,
-                                     std::vector<std::string> inputs,
-                                     std::vector<std::string> outputs)
+void RedisCluster::run_model(const std::string& key,
+                             std::vector<std::string> inputs,
+                             std::vector<std::string> outputs)
 {
-    /*  For this version of run model, we have to copy all
-        input and output tensors, so we will randomly select
-        a model.  We can't use rand, because MPI would then
-        have the same random number across all ranks.  Instead
-        We will choose it based on the db of the first input tensor.
-    */
+    DBNode* db = this->_get_model_script_db(inputs, outputs);
 
-    uint16_t hash_slot = this->_get_hash_slot(inputs[0]);
-    uint16_t db_index = this->_get_dbnode_index(hash_slot, 0,
-                                                this->_db_nodes.size()-1);
-    DBNode* db = &(this->_db_nodes[db_index]);
+    std::vector<std::string> local_inputs =
+        this->_generate_local_keys(db, inputs);
+    std::vector<std::string> local_outputs =
+        this->_generate_local_keys(db, outputs);
 
-    //Generate temporary names so that all keys go to same slot
-    std::vector<std::string> tmp_inputs =
-        _get_tmp_names(inputs, db->prefix);
-    std::vector<std::string> tmp_outputs =
-        _get_tmp_names(outputs, db->prefix);
+    CommandList cmds;
 
-    //Copy all input tensors to temporary names to align hash slots
-    this->copy_tensors(inputs, tmp_inputs);
+    this->_add_localize_tensor_commands(inputs, local_inputs, cmds);
 
     std::string model_name = "{" + db->prefix +
-                            "}." + std::string(key);
+                             "}." + std::string(key);
 
-    Command cmd;
-    CommandReply reply;
-    cmd.add_field("AI.MODELRUN");
-    cmd.add_field(model_name, true);
-    cmd.add_field("INPUTS");
-    cmd.add_fields(tmp_inputs);
-    cmd.add_field("OUTPUTS");
-    cmd.add_fields(tmp_outputs);
-    reply = this->run(cmd);
+    this->_add_model_run_command(model_name, local_inputs,
+                                 local_outputs, cmds);
 
-    this->copy_tensors(tmp_outputs, outputs);
 
-    std::vector<std::string> keys_to_delete;
-    keys_to_delete.insert(keys_to_delete.end(),
-                            tmp_outputs.begin(),
-                            tmp_outputs.end());
-    keys_to_delete.insert(keys_to_delete.end(),
-                            tmp_inputs.begin(),
-                            tmp_inputs.end());
+    size_t copy_start_index = cmds.size();
+    this->_add_retrieve_localized_tensor_commands(outputs,
+                                                  local_outputs,
+                                                  cmds);
 
-    this->_delete_keys(keys_to_delete);
 
-    return reply;
+    this->_add_delete_localized_keys_commands(inputs, local_inputs,
+                                              cmds);
+
+    this->_add_delete_localized_keys_commands(outputs, local_outputs,
+                                              cmds);
+
+    /* Because sw::redis::QueuedReplies has no default constructor
+    and the other constructor is private, we have no ability at this
+    moment to fold QueuedReplies into CommandReply or to return from a
+    function that contains a try/catch block because we can't
+    create a default value that would get returned from the function
+    if an unexpected case gets encountered (e.g. the compiler
+    will issue error/warning "control may reach end
+    of non-void function ").  For now, we will fold all of the
+    pipeline execution into this object, but a fix to redis++
+    should be included in the next version.  When that
+    fix is included, a function called run_pipe() should
+    be created that executes the CommandList and returns
+    the QuededReplies or a CommandReply constructed from the
+    QueuedReplies.
+    */
+    std::string_view sv_prefix(db->prefix);
+
+    int n_trials = 100;
+    while (n_trials > 0) {
+
+        try {
+            sw::redis::Pipeline pipe =
+                this->_redis_cluster->pipeline(db->prefix, false);
+
+            CommandList::iterator cmd_it = cmds.begin();
+            CommandList::iterator cmd_end = cmds.end();
+
+            while(cmd_it!=cmd_end) {
+                pipe.command((*cmd_it)->begin(), (*cmd_it)->end());
+                cmd_it++;
+            }
+
+            sw::redis::QueuedReplies q_reply = pipe.exec();
+
+            bool has_error = false;
+            for(size_t i=0; i<q_reply.size(); i++) {
+                CommandReply r;
+                r = &q_reply.get(i);
+                if(r.has_error()) {
+                    has_error = true;
+                }
+            }
+
+            if(!has_error) {
+                n_trials = -1;
+                size_t c = copy_start_index;
+                for(size_t i=0; i<outputs.size(); i++) {
+                    if(outputs[i]!=local_outputs[i]) {
+                        CommandReply pipe_reply;
+                        pipe_reply = &q_reply.get(c);
+                        std::vector<size_t> dims =
+                            CommandReplyParser::get_tensor_dims(pipe_reply);
+
+                        TensorType type =
+                            CommandReplyParser::get_tensor_data_type(pipe_reply);
+
+                        std::string_view blob =
+                            CommandReplyParser::get_tensor_data_blob(pipe_reply);
+
+                        c++;
+
+                        Command cmd_put_o;
+                        cmd_put_o.add_field("AI.TENSORSET");
+                        cmd_put_o.add_field(outputs[i], true);
+                        cmd_put_o.add_field(TENSOR_STR_MAP.at(type));
+                        cmd_put_o.add_fields(dims);
+                        cmd_put_o.add_field("BLOB");
+                        cmd_put_o.add_field_ptr(blob);
+                        this->run(cmd_put_o);
+                    }
+                }
+            }
+            else {
+                n_trials = 0;
+            }
+        }
+        catch (sw::redis::TimeoutError &e) {
+            n_trials--;
+            std::this_thread::sleep_for(std::chrono::seconds(2));
+        }
+        catch (sw::redis::IoError &e) {
+            n_trials--;
+            std::this_thread::sleep_for(std::chrono::seconds(2));
+        }
+        catch (...) {
+            n_trials--;
+            throw;
+        }
+    }
+
+    if (n_trials==0) {
+        throw std::runtime_error("Redis failed to execute command pipeline.");
+    }
+
+    return;
 }
 
-CommandReply RedisCluster::run_script(const std::string& key,
-                                      const std::string& function,
-                                      std::vector<std::string> inputs,
-                                      std::vector<std::string> outputs)
+void RedisCluster::run_script(const std::string& key,
+                              const std::string& function,
+                              std::vector<std::string> inputs,
+                              std::vector<std::string> outputs)
 {
-    uint16_t hash_slot = this->_get_hash_slot(inputs[0]);
-    uint16_t db_index = this->_get_dbnode_index(hash_slot, 0,
-                                                this->_db_nodes.size()-1);
-    DBNode* db = &(this->_db_nodes[db_index]);
+    DBNode* db = this->_get_model_script_db(inputs, outputs);
 
-    //Generate temporary names so that all keys go to same slot
-    std::vector<std::string> tmp_inputs =
-        _get_tmp_names(inputs, db->prefix);
-    std::vector<std::string> tmp_outputs =
-        _get_tmp_names(outputs, db->prefix);
+    std::vector<std::string> local_inputs =
+        this->_generate_local_keys(db, inputs);
+    std::vector<std::string> local_outputs =
+        this->_generate_local_keys(db, outputs);
 
-    //Copy all input tensors to temporary names to align hash slots
-    this->copy_tensors(inputs, tmp_inputs);
+    CommandList cmds;
+
+    this->_add_localize_tensor_commands(inputs, local_inputs, cmds);
 
     std::string script_name = "{" + db->prefix +
-                            "}." + std::string(key);
-    Command cmd;
-    CommandReply reply;
-    cmd.add_field("AI.SCRIPTRUN");
-    cmd.add_field(script_name, true);
-    cmd.add_field(function);
-    cmd.add_field("INPUTS");
-    cmd.add_fields(tmp_inputs);
-    cmd.add_field("OUTPUTS");
-    cmd.add_fields(tmp_outputs);
-    reply = this->run(cmd);
+                              "}." + std::string(key);
 
-    this->copy_tensors(tmp_outputs, outputs);
+    this->_add_script_run_command(script_name, function,
+                                 local_inputs,
+                                 local_outputs, cmds);
 
-    std::vector<std::string> keys_to_delete;
-    keys_to_delete.insert(keys_to_delete.end(),
-                            tmp_outputs.begin(),
-                            tmp_outputs.end());
-    keys_to_delete.insert(keys_to_delete.end(),
-                            tmp_inputs.begin(),
-                            tmp_inputs.end());
 
-    this->_delete_keys(keys_to_delete);
-    return reply;
+    size_t copy_start_index = cmds.size();
+    this->_add_retrieve_localized_tensor_commands(outputs,
+                                                  local_outputs,
+                                                  cmds);
+
+
+    this->_add_delete_localized_keys_commands(inputs, local_inputs,
+                                              cmds);
+
+    this->_add_delete_localized_keys_commands(outputs, local_outputs,
+                                              cmds);
+
+    /* Because sw::redis::QueuedReplies has no default constructor
+    and the other constructor is private, we have no ability at this
+    moment to fold QueuedReplies into CommandReply or to return from a
+    function that contains a try/catch block because we can't
+    create a default value that would get returned from the function
+    if an unexpected case gets encountered (e.g. the compiler
+    will issue error/warning "control may reach end
+    of non-void function ").  For now, we will fold all of the
+    pipeline execution into this object, but a fix to redis++
+    should be included in the next version.  When that
+    fix is included, a function called run_pipe() should
+    be created that executes the CommandList and returns
+    the QuededReplies or a CommandReply constructed from the
+    QueuedReplies.
+    */
+    std::string_view sv_prefix(db->prefix);
+
+    int n_trials = 100;
+    while (n_trials > 0) {
+
+        try {
+            sw::redis::Pipeline pipe =
+                this->_redis_cluster->pipeline(db->prefix, false);
+
+            CommandList::iterator cmd_it = cmds.begin();
+            CommandList::iterator cmd_end = cmds.end();
+
+            while(cmd_it!=cmd_end) {
+                pipe.command((*cmd_it)->begin(), (*cmd_it)->end());
+                cmd_it++;
+            }
+
+            sw::redis::QueuedReplies q_reply = pipe.exec();
+
+            bool has_error = false;
+            for(size_t i=0; i<q_reply.size(); i++) {
+                CommandReply r;
+                r = &q_reply.get(i);
+                if(r.has_error()) {
+                    has_error = true;
+                }
+            }
+
+            if(!has_error) {
+                n_trials = -1;
+                size_t c = copy_start_index;
+                for(size_t i=0; i<outputs.size(); i++) {
+                    if(outputs[i]!=local_outputs[i]) {
+                        CommandReply pipe_reply;
+                        pipe_reply = &q_reply.get(c);
+                        std::vector<size_t> dims =
+                            CommandReplyParser::get_tensor_dims(pipe_reply);
+
+                        TensorType type =
+                            CommandReplyParser::get_tensor_data_type(pipe_reply);
+
+                        std::string_view blob =
+                            CommandReplyParser::get_tensor_data_blob(pipe_reply);
+
+                        c++;
+
+                        Command cmd_put_o;
+                        cmd_put_o.add_field("AI.TENSORSET");
+                        cmd_put_o.add_field(outputs[i], true);
+                        cmd_put_o.add_field(TENSOR_STR_MAP.at(type));
+                        cmd_put_o.add_fields(dims);
+                        cmd_put_o.add_field("BLOB");
+                        cmd_put_o.add_field_ptr(blob);
+                        this->run(cmd_put_o);
+                    }
+                }
+            }
+            else {
+                n_trials = 0;
+            }
+        }
+        catch (sw::redis::TimeoutError &e) {
+            n_trials--;
+            std::this_thread::sleep_for(std::chrono::seconds(2));
+        }
+        catch (sw::redis::IoError &e) {
+            n_trials--;
+            std::this_thread::sleep_for(std::chrono::seconds(2));
+        }
+        catch (...) {
+            n_trials--;
+            throw;
+        }
+    }
+
+    if (n_trials==0) {
+        throw std::runtime_error("Redis failed to execute command pipeline.");
+    }
+
+    return;
 }
 
 CommandReply RedisCluster::get_model(const std::string& key)
@@ -635,7 +795,6 @@ uint16_t RedisCluster::_get_hash_slot(const std::string& key)
     std::string hash_key;
     if(this->_has_hash_tag(key))
         hash_key = this->_get_hash_tag(key);
-
     else
         hash_key = key;
     return sw::redis::crc16(hash_key.c_str(),
@@ -684,140 +843,168 @@ void RedisCluster::_delete_keys(std::vector<std::string> keys)
     return;
 }
 
-void RedisCluster::__run_model_dagrun(const std::string& key,
-                                      std::vector<std::string> inputs,
-                                      std::vector<std::string> outputs)
+DBNode* RedisCluster::_get_model_script_db(std::vector<std::string>& inputs,
+                                           std::vector<std::string>& outputs)
 {
-    /*This function will run a RedisAI model.  Because the RedisAI
-    AI.RUNMODEL and AI.DAGRUN commands assume that the tensors
-    and model are all on the same node.  As a result, we will
-    have to retrieve all input tensors that are not on the same
-    node as the model and set temporary
-    */
+    std::vector<int> hash_slot_tally(this->_db_nodes.size(), 0);
 
-    //TODO We need to make sure that no other clients are using the
-    //same keys and model because we may end up overwriting or having
-    //race conditions on who can use the model, etc.
+    int max_colocated = 0;
+    DBNode* opt_db_node = 0;
 
-    DBNode* db = this->_get_model_script_db(key, inputs, outputs);
-
-    //Create list of input tensors that do not hash to db slots
-    std::unordered_set<std::string> remote_inputs;
     for(int i=0; i<inputs.size(); i++) {
         uint16_t hash_slot = this->_get_hash_slot(inputs[i]);
-        if(hash_slot < db->lower_hash_slot ||
-        hash_slot > db->upper_hash_slot)
-        remote_inputs.insert(inputs[i]);
-    }
-
-    //Retrieve tensors that do not hash to db,
-    //rename the tensors to {prefix}.tensor_name.TMP
-    //TODO we need to make sure users don't use the .TMP suffix
-    //or check that the key does not exist
-    for(int i=0; i<inputs.size(); i++) {
-        if(remote_inputs.count(inputs[i])>0) {
-        std::string new_key = "{" + db->prefix + "}." +
-                                inputs[i] + ".TMP";
-        this->copy_tensor(inputs[i], new_key);
-        remote_inputs.erase(inputs[i]);
-        remote_inputs.insert(new_key);
-        inputs[i] = new_key;
+        uint16_t db_index = this->_get_dbnode_index(hash_slot, 0,
+                                                    this->_db_nodes.size());
+        hash_slot_tally[db_index]++;
+        if(hash_slot_tally[db_index]>max_colocated) {
+            opt_db_node = &(this->_db_nodes[db_index]);
+            max_colocated = hash_slot_tally[db_index];
         }
     }
 
-    //Create a renaming scheme for output tensor
-    std::unordered_map<std::string, std::string> remote_outputs;
     for(int i=0; i<outputs.size(); i++) {
         uint16_t hash_slot = this->_get_hash_slot(outputs[i]);
-        if(hash_slot < db->lower_hash_slot ||
-        hash_slot > db->upper_hash_slot) {
-            std::string tmp_name = "{" + db->prefix + "}." +
-                                outputs[i] + ".TMP";
-            remote_outputs.insert({outputs[i], tmp_name});
-            outputs[i] = remote_outputs[outputs[i]];
+        uint16_t db_index = this->_get_dbnode_index(hash_slot, 0,
+                                                    this->_db_nodes.size());
+        hash_slot_tally[db_index]++;
+        if(hash_slot_tally[db_index]>max_colocated) {
+            opt_db_node = &(this->_db_nodes[db_index]);
+            max_colocated = hash_slot_tally[db_index];
         }
     }
 
-    std::string model_name = "{" + db->prefix +
-                            "}." + std::string(key);
-    Command cmd;
+    return opt_db_node;
+}
 
-    cmd.add_field("AI.DAGRUN");
-    cmd.add_field("LOAD");
-    cmd.add_field(std::to_string(inputs.size()));
-    cmd.add_fields(inputs);
-    cmd.add_field("PERSIST");
-    cmd.add_field(std::to_string(outputs.size()));
-    cmd.add_fields(outputs);
-    cmd.add_field("|>");
-    cmd.add_field("AI.MODELRUN");
-    cmd.add_field(model_name, true);
-    cmd.add_field("INPUTS");
-    cmd.add_fields(inputs);
-    cmd.add_field("OUTPUTS");
-    cmd.add_fields(outputs);
-    this->run(cmd);
+std::vector<std::string> RedisCluster::_generate_local_keys(DBNode* db,
+                                                            std::vector<std::string>& keys)
+{
+    std::vector<std::string> local_keys;
 
-    //Delete temporary input tensors
-    std::unordered_set<std::string>::const_iterator i_it
-        = remote_inputs.begin();
-    std::unordered_set<std::string>::const_iterator i_it_end
-        = remote_inputs.end();
-    while(i_it!=i_it_end) {
-        this->delete_tensor(*i_it);
-        i_it++;
+    uint16_t hash_slot;
+    for(size_t i=0; i<keys.size(); i++) {
+        hash_slot = this->_get_hash_slot(keys[i]);
+        if(hash_slot > db->upper_hash_slot ||
+           hash_slot < db->lower_hash_slot) {
+               local_keys.push_back(
+                   (this->_get_tmp_names({keys[i]}, db->prefix))[0]);
+           }
+        else {
+            local_keys.push_back(keys[i]);
+        }
     }
+    return local_keys;
+}
 
-    //Move temporary output to the correct location and
-    //delete temporary output tensors
-    std::unordered_map<std::string, std::string>::const_iterator j_it
-        = remote_outputs.begin();
-    std::unordered_map<std::string, std::string>::const_iterator j_it_end
-        = remote_outputs.end();
-    while(j_it!=j_it_end) {
-        this->rename_tensor(j_it->second, j_it->first);
-        j_it++;
+void RedisCluster::_add_localize_tensor_commands(const std::vector<std::string>& keys,
+                                                 const std::vector<std::string>& localized_keys,
+                                                 CommandList& cmds)
+{
+    for(size_t i=0; i<keys.size(); i++) {
+        if(keys[i]!=localized_keys[i]) {
+
+            CommandReply reply = this->get_tensor(keys[i]);
+
+            std::vector<size_t> dims =
+                CommandReplyParser::get_tensor_dims(reply);
+
+            TensorType type =
+                CommandReplyParser::get_tensor_data_type(reply);
+
+            std::string_view blob =
+                CommandReplyParser::get_tensor_data_blob(reply);
+
+            Command* cmd = cmds.add_command();
+
+            cmd->add_field("AI.TENSORSET");
+            cmd->add_field(localized_keys[i], true);
+            cmd->add_field(TENSOR_STR_MAP.at(type));
+            cmd->add_fields(dims);
+            cmd->add_field("BLOB");
+            cmd->add_field_ptr(std::string(blob.data(), blob.size()));
+        }
     }
-
     return;
 }
 
-DBNode* RedisCluster::_get_model_script_db(const std::string& name,
-                                           std::vector<std::string>& inputs,
-                                           std::vector<std::string>& outputs)
+void RedisCluster::_add_model_run_command(const std::string& model_name,
+                                          const std::vector<std::string>& local_inputs,
+                                          const std::vector<std::string>& local_outputs,
+                                          CommandList& cmds)
 {
-    /* This function calculates the optimal model name to use
-    to run the provided inputs.  If a cluster is not being used,
-    the model name is returned, else a prefixed model name is returned.
-    */
+    Command* exec_cmd = cmds.add_command();
+    exec_cmd->add_field("AI.DAGRUN");
+    exec_cmd->add_field("LOAD");
+    exec_cmd->add_field(std::to_string(local_inputs.size()));
+    exec_cmd->add_fields(local_inputs);
+    exec_cmd->add_field("PERSIST");
+    exec_cmd->add_field(std::to_string(local_outputs.size()));
+    exec_cmd->add_fields(local_outputs);
+    exec_cmd->add_field("|>");
+    exec_cmd->add_field("AI.MODELRUN");
+    exec_cmd->add_field(model_name, true);
+    exec_cmd->add_field("INPUTS");
+    exec_cmd->add_fields(local_inputs);
+    exec_cmd->add_field("OUTPUTS");
+    exec_cmd->add_fields(local_outputs);
+    return;
+}
 
-    //TODO we should randomly choose the max if there are multiple
-    //maxes
+void RedisCluster::_add_script_run_command(const std::string& script_name,
+                                           const std::string& function_name,
+                                           const std::vector<std::string>& local_inputs,
+                                           const std::vector<std::string>& local_outputs,
+                                           CommandList& cmds)
+{
+    Command* exec_cmd = cmds.add_command();
+    exec_cmd->add_field("AI.DAGRUN");
+    exec_cmd->add_field("LOAD");
+    exec_cmd->add_field(std::to_string(local_inputs.size()));
+    exec_cmd->add_fields(local_inputs);
+    exec_cmd->add_field("PERSIST");
+    exec_cmd->add_field(std::to_string(local_outputs.size()));
+    exec_cmd->add_fields(local_outputs);
+    exec_cmd->add_field("|>");
+    exec_cmd->add_field("AI.SCRIPTRUN");
+    exec_cmd->add_field(script_name, true);
+    exec_cmd->add_field(function_name);
+    exec_cmd->add_field("INPUTS");
+    exec_cmd->add_fields(local_inputs);
+    exec_cmd->add_field("OUTPUTS");
+    exec_cmd->add_fields(local_outputs);
+    return;
+}
 
-    std::vector<int> hash_slot_tally(this->_db_nodes.size(), 0);
-
-    for(int i=0; i<inputs.size(); i++) {
-        uint16_t hash_slot = this->_get_hash_slot(inputs[i]);
-        uint16_t db_index = this->_get_dbnode_index(hash_slot, 0,
-                                                    this->_db_nodes.size());
-        hash_slot_tally[db_index]++;
-    }
-
-    for(int i=0; i<outputs.size(); i++) {
-        uint16_t hash_slot = this->_get_hash_slot(outputs[i]);
-        uint16_t db_index = this->_get_dbnode_index(hash_slot, 0,
-                                                    this->_db_nodes.size());
-        hash_slot_tally[db_index]++;
-    }
-
-    //Determine which DBNode has the most hashes
-    int max_hash = -1;
-    DBNode* db = 0;
-    for(int i=0; i<this->_db_nodes.size(); i++) {
-        if(hash_slot_tally[i] > max_hash) {
-        max_hash = hash_slot_tally[i];
-        db = &(this->_db_nodes[i]);
+void RedisCluster::_add_retrieve_localized_tensor_commands(const std::vector<std::string>& keys,
+                                             const std::vector<std::string>& local_keys,
+                                             CommandList& cmds)
+{
+    for(size_t i=0; i<keys.size(); i++) {
+        if(keys[i]!=local_keys[i]) {
+            Command* get_cmd = cmds.add_command();
+            get_cmd->add_field("AI.TENSORGET");
+            get_cmd->add_field(local_keys[i], true);
+            get_cmd->add_field("META");
+            get_cmd->add_field("BLOB");
         }
     }
-    return db;
+    return;
+}
+
+void RedisCluster::_add_delete_localized_keys_commands(const std::vector<std::string>& keys,
+                                                       const std::vector<std::string>& local_keys,
+                                                       CommandList& cmds)
+{
+    Command* del_cmd = 0;
+
+    for(size_t i=0; i<keys.size(); i++) {
+        if(keys[i]!=local_keys[i]) {
+            if(del_cmd==0) {
+                del_cmd = cmds.add_command();
+                del_cmd->add_field("DEL");
+            }
+            del_cmd->add_field(local_keys[i]);
+        }
+    }
+    return;
 }
