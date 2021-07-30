@@ -76,10 +76,6 @@ CommandReply RedisCluster::run(Command& cmd)
         try {
             sw::redis::Redis db = this->_redis_cluster->redis(sv_prefix, false);
             reply = db.command(cmd_fields_start, cmd_fields_end);
-
-            if(reply.has_error()==0)
-                return reply;
-            n_trials = 0;
         }
         catch (sw::redis::IoError &e) {
             n_trials--;
@@ -98,6 +94,17 @@ CommandReply RedisCluster::run(Command& cmd)
                                      cmd.first_field() +
                                      " execution.");
         }
+
+        try {
+            if(reply.has_error()==0)
+                return reply;
+            n_trials = 0;
+        }
+        catch (...) {
+            throw std::runtime_error("The reply.has_error() "\
+                                     "unexpectedly crashed.");
+        }
+
     }
 
     if (n_trials == 0) {
