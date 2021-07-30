@@ -98,7 +98,6 @@ CommandReply RedisCluster::run(Command& cmd)
         try {
             if(reply.has_error()==0)
                 return reply;
-            n_trials = 0;
         }
         catch (...) {
             throw std::runtime_error("The reply.has_error() "\
