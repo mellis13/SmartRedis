@@ -63,6 +63,11 @@ void PyClient::put_tensor(std::string& key,
                           std::string& type,
                           py::array data)
 {
+    std::cout<<"Entering put_tensor()"<<std::endl<<std::flush;
+    if(data.m_ptr==NULL) {
+        std::cout<<"m_ptr is NULL!"<<std::endl<<std::flush;
+        throw std::runtime_error("NULL m_ptr!");
+    }
     auto buffer = data.request();
     void* ptr = buffer.ptr;
 
