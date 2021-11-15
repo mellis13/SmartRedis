@@ -52,8 +52,11 @@ include_directories(SYSTEM
     src/fortran
 )
 
+# Build object library to compile source once
+add_library(smartredis_objects OBJECT ${CLIENT_SRC})
+
 # Build dynamic library
-add_library(smartredis SHARED ${CLIENT_SRC})
+add_library(smartredis SHARED $<TARGET_OBJECTS:smartredis_objects>)
 set_target_properties(smartredis PROPERTIES SUFFIX ".so")
 target_link_libraries(smartredis PUBLIC ${EXT_CLIENT_LIBRARIES})
 
@@ -72,13 +75,13 @@ if(BUILD_PYTHON)
 	add_subdirectory(${CMAKE_SOURCE_DIR}/third-party/pybind
                      ${CMAKE_SOURCE_DIR}/third-party/pybind/build)
 
-    add_library(smartredis_static STATIC ${CLIENT_SRC})
+    add_library(smartredis_static STATIC $<TARGET_OBJECTS:smartredis_objects>)
 
 	pybind11_add_module(smartredisPy
 	                    src/python/src/pyclient.cpp
                         src/python/src/pydataset.cpp
-                        ${CLIENT_SRC}
-                        src/python/bindings/bind.cpp)
+                        src/python/bindings/bind.cpp
+                        $<TARGET_OBJECTS:smartredis_objects>)
 
 	target_link_libraries(smartredisPy PUBLIC ${EXT_CLIENT_LIBRARIES})
 	install(TARGETS smartredisPy
