@@ -73,7 +73,7 @@ class Client
         *   \param cluster Flag to indicate if a database cluster
         *                  is being used
         */
-        Client(bool cluster);
+        Client(bool cluster, bool unix_domain_socket=false);
 
         /*!
         *   \brief Client copy constructor is not available

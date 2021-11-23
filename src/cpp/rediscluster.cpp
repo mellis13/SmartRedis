@@ -33,8 +33,14 @@
 using namespace SmartRedis;
 
 // RedisCluster constructor
-RedisCluster::RedisCluster() : RedisServer()
+RedisCluster::RedisCluster(bool unix_domain_socket) : RedisServer()
 {
+
+    if (unix_domain_socket) {
+        throw std::runtime_error("Cluster does not support "\
+                                 "unix domain sockets.");
+    }
+
     std::string address_port = _get_ssdb();
     _connect(address_port);
     _map_cluster();

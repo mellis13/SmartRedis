@@ -31,11 +31,28 @@
 using namespace SmartRedis;
 
 // Redis constructor.
-Redis::Redis() : RedisServer()
+Redis::Redis(bool unix_domain_socket) : RedisServer()
 {
-    std::string address_port = _get_ssdb();
-    _add_to_address_map(address_port);
-    _connect(address_port);
+    if (unix_domain_socket) {
+        char* env_char = getenv("SSUDS");
+        if (env_char == NULL)
+            throw std::runtime_error("The environment variable SSUDS "\
+                                    "must be set to use the client.");
+        std::string socket_file = std::string(env_char);
+        _add_to_address_map(socket_file);
+        if(socket_file.rfind("unix://", 0) == 0) {
+            _connect(socket_file);
+        }
+        else{
+            _connect("unix://" + socket_file);
+        }
+
+    }
+    else {
+        std::string address_port = _get_ssdb();
+        _add_to_address_map(address_port);
+        _connect(address_port);
+    }
 }
 
 // Redis constructor. Uses address provided to constructor instead of environment variables

@@ -31,9 +31,9 @@
 using namespace SmartRedis;
 
 // Constructor
-Client::Client(bool cluster)
-    : _redis_cluster(cluster ? new RedisCluster() : NULL),
-      _redis(cluster ? NULL : new Redis())
+Client::Client(bool cluster, bool unix_domain_socket)
+    : _redis_cluster(cluster ? new RedisCluster(unix_domain_socket) : NULL),
+      _redis(cluster ? NULL : new Redis(unix_domain_socket))
 {
     if (cluster)
         _redis_server =  _redis_cluster;

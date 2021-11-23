@@ -52,7 +52,7 @@ class RedisCluster : public RedisServer
         /*!
         *   \brief RedisCluster constructor.
         */
-        RedisCluster();
+        RedisCluster(bool unix_domain_socket = false);
 
         /*!
         *   \brief RedisCluster constructor.

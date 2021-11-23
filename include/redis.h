@@ -47,7 +47,7 @@ class Redis : public RedisServer
         /*!
         *   \brief Redis constructor.
         */
-        Redis();
+        Redis(bool unix_domain_socket = false);
 
         /*!
         *   \brief Redis constructor.
