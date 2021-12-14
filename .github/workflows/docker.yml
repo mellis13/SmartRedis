@@ -24,7 +24,7 @@ jobs:
                 docker build -t cpp_docker_test .
                 cd ../../../
             - name: 'Build C docker application'
-                run: |
-                  cd ./tests/docker/c
+              run: |
+                cd ./tests/docker/c
 #                  docker build -t c_docker_test .
 #                  cd ../../../
