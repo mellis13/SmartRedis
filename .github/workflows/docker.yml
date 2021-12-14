@@ -22,7 +22,7 @@ jobs:
               run: |
                 cd ./tests/docker/cpp
                 docker build -t cpp_docker_test .
-#                cd ../../../
+                cd ../../../
 #            - name: 'Build C docker application'
 #                run: |
 #                  cd ./tests/docker/c
