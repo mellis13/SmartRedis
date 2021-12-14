@@ -17,3 +17,8 @@ jobs:
               run: |
                 cd ./images
                 docker build -t smartredis .
+                cd ../
+            - name: 'Build CPP test application'
+              run: |
+                cd ./tests/docker/cpp
+                docker build -t cpp_docker_test .
