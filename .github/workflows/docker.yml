@@ -11,14 +11,18 @@ jobs:
             matrix:
               os: [ubuntu-20.04] # cannot test on macOS as docker isn't supported on Mac
         steps:
-            - name: 'Checkout'
+            - name: 'Checkout SmartRedis'
               uses: actions/checkout@v2
-            - name: 'Build'
+            - name: 'Build base SmartRedis docker image'
               run: |
                 cd ./images
                 docker build -t smartredis .
                 cd ../
-            - name: 'Build CPP test application'
+            - name: 'Build C++ docker application'
               run: |
                 cd ./tests/docker/cpp
                 docker build -t cpp_docker_test .
+            - name: 'Build C docker application'
+                run: |
+                  cd ./tests/docker/c
+                  docker build -t c_docker_test .

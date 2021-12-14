@@ -28,15 +28,7 @@
 
 FROM smartredis
 
-# Install tooling
-#RUN apt-get update && \
-#    DEBIAN_FRONTEND=noninteractive apt-get install -q -y --no-install-recommends \
-#    make cmake gcc g++
-
 COPY ./CMakeLists.txt /usr/local/src/DockerTest/
 COPY ./test_docker.cpp /usr/local/src/DockerTest/
 WORKDIR /usr/local/src/DockerTest
 RUN mkdir build && cd build && cmake .. && make && cd ../
-
-#CMD ["/usr/bin/python", "/usr/local/src/SmartRedis/sr_py_test.py"]
-CMD ["sleep", "10000"]
