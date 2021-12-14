@@ -7,7 +7,7 @@ jobs:
         name: Build docker image on ${{ matrix.os }}
         runs-on: ${{ matrix.os }}
         strategy:
-            fail-fast: false
+            fail-fast: true
             matrix:
               os: [ubuntu-20.04] # cannot test on macOS as docker isn't supported on Mac
         steps:
@@ -22,9 +22,9 @@ jobs:
               run: |
                 cd ./tests/docker/cpp
                 docker build -t cpp_docker_test .
-                cd ../../../
-            - name: 'Build C docker application'
-                run: |
-                  cd ./tests/docker/c
-                  docker build -t c_docker_test .
-                  cd ../../../
+#                cd ../../../
+#            - name: 'Build C docker application'
+#                run: |
+#                  cd ./tests/docker/c
+#                  docker build -t c_docker_test .
+#                  cd ../../../
