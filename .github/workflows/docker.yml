@@ -40,7 +40,7 @@ jobs:
                 cd ../
             - name: 'Build C++ docker application'
               env:
-                SSDB="redis:6379"
+                SSDB: redis:6379
               run: |
                 cd ./tests/docker/cpp
                 docker build -t cpp_docker_test .
