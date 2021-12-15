@@ -15,6 +15,6 @@ include_directories(SYSTEM
 # Build executables
 
 add_executable(docker_test
-	test_docker.cpp
+	docker_test.cpp
 )
 target_link_libraries(docker_test ${SR_LIB} pthread)

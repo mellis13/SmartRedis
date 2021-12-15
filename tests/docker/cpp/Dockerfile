@@ -29,10 +29,10 @@
 FROM smartredis
 
 COPY ./CMakeLists.txt /usr/local/src/DockerTest/
-COPY ./test_docker.cpp /usr/local/src/DockerTest/
+COPY ./docker_test.cpp /usr/local/src/DockerTest/
 WORKDIR /usr/local/src/DockerTest
 RUN mkdir build && cd build && cmake .. && make && cd ../
 
 ENV SSDB="127.0.0.1:6379"
 
-CMD [./build/docker_test]
+CMD ["/usr/local/src/DockerTest/build/docker_test"]
