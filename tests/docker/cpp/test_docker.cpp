@@ -2,6 +2,6 @@
 
 int main(int argc, char* argv[]) {
 
-  SmartRedis::Client c(false);
+  SmartRedis::Client client(false);
   return 0;
 }
