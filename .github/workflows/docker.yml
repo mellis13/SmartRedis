@@ -2,6 +2,9 @@ name: 'build_docker'
 
 on: [push, pull_request]
 
+env:
+  SSDB: "127.0.0.1:6379"
+
 jobs:
     run_docker_build:
         name: Build docker image on ${{ matrix.os }}, RedisAI ${{ matrix.rai_v }}
