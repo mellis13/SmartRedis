@@ -29,7 +29,7 @@ jobs:
                 docker build -t c_docker_test .
                 cd ../../../
             - name: 'Build Fortran docker application'
-                run: |
-                  cd ./tests/docker/fortran
-                  docker build -t fortran_docker_test .
-                  cd ../../../
+              run: |
+                cd ./tests/docker/fortran
+                docker build -t fortran_docker_test .
+                cd ../../../
