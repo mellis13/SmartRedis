@@ -4,12 +4,29 @@ on: [push, pull_request]
 
 jobs:
     run_docker_build:
-        name: Build docker image on ${{ matrix.os }}
+        name: Build docker image on ${{ matrix.os }}, RedisAI ${{ matrix.rai_v }}
         runs-on: ${{ matrix.os }}
         strategy:
             fail-fast: true
             matrix:
               os: [ubuntu-20.04] # cannot test on macOS as docker isn't supported on Mac
+              rai_v: [1.2.4, 1.2.5] # verisons of RedisAI
+
+        # Service containers to run with docker tests
+        services:
+          # Label used to access the service container
+          redis:
+            # Docker Hub image
+            image: redislabs/redisai:${{ matrix.rai_v }}-cpu-xenial
+            # Set health checks to wait until redis has started
+            options: >-
+              --health-cmd "redis-cli ping"
+              --health-interval 10s
+              --health-timeout 5s
+              --health-retries 5
+            ports:
+              # map port 6379 on service container to the host
+              - 6379:6379
         steps:
             - name: 'Checkout SmartRedis'
               uses: actions/checkout@v2
