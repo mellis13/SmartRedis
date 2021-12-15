@@ -33,3 +33,8 @@ jobs:
                 cd ./tests/docker/fortran
                 docker build -t fortran_docker_test .
                 cd ../../../
+            - name: 'Build Fortran docker application'
+              run: |
+                cd ./tests/docker/python
+                docker build -t python_docker_test .
+                cd ../../../
