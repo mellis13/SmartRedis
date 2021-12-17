@@ -2,9 +2,6 @@ name: 'build_docker'
 
 on: [push, pull_request]
 
-env:
-  SSDB: "127.0.0.1:6379"
-
 jobs:
     run_docker_build:
         name: Build docker image on ${{ matrix.os }}, RedisAI ${{ matrix.rai_v }}
@@ -39,13 +36,11 @@ jobs:
                 docker build -t smartredis .
                 cd ../
             - name: 'Build C++ docker application'
-              env:
-                SSDB: redis:6379
               run: |
                 cd ./tests/docker/cpp
                 docker build -t cpp_docker_test .
                 cd ../../../
-                docker run cpp_docker_test
+                docker run -d --add-host host.docker.internal:host-gateway --env SSDB="host.docker.internal:6379" cpp_docker_test
             - name: 'Build C docker application'
               run: |
                 cd ./tests/docker/c
