@@ -45,14 +45,11 @@ jobs:
               run: |
                 cd ./tests/docker/c
                 docker build -t c_docker_test .
+                docker run -d --env SSDB="redis:6379" c_docker_test
                 cd ../../../
             - name: 'Build Fortran docker application'
               run: |
                 cd ./tests/docker/fortran
                 docker build -t fortran_docker_test .
-                cd ../../../
-            - name: 'Build Fortran docker application'
-              run: |
-                cd ./tests/docker/python
-                docker build -t python_docker_test .
+                docker run -d --env SSDB="redis:6379" fortran_docker_test
                 cd ../../../
