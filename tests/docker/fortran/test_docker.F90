@@ -1,11 +1,22 @@
 program main
 
-  use smartredis_client, only : client_type
+    use smartredis_client, only : client_type
 
-  implicit none
+    implicit none
 
-  type(client_type) :: client
+#include "enum_fortran.inc"
 
-  call client%initialize(.FALSE.)
+    integer(kind=enum_kind) :: result
+    type(client_type) :: client
+    integer, parameter :: dim1 = 10
+    real(kind=8), dimension(dim1) :: tensor
+
+    result = client%initialize(.FALSE.)
+    if (result .ne. SRNoError) stop
+
+    call random_number(tensor)
+
+    result = client%put_tensor("fortran_docker_tensor", tensor, shape(tensor))
+    if (result .ne. SRNoError) stop
 
 end program main
