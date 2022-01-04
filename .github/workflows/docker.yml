@@ -53,3 +53,9 @@ jobs:
                 docker build -t fortran_docker_test .
                 docker run -d --env SSDB="redis:6379" fortran_docker_test
                 cd ../../../
+            - name: 'Build Python docker application'
+              run: |
+                cd ./tests/docker/python
+                docker build -t python_docker_test .
+                docker run -d --env SSDB="redis:6379" python_docker_test
+                cd ../../../
