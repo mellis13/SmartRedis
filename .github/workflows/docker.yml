@@ -56,7 +56,7 @@ jobs:
               # map port 6379 on service container to the host
               - 6379:6379
         steps:
-              - name: 'Build base SmartRedis docker image'
+            - name: 'Build base SmartRedis docker image'
               uses: actions/checkout@v2
               run: |
                 cd ./images
