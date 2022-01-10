@@ -56,15 +56,17 @@ jobs:
               # map port 6379 on service container to the host
               - 6379:6379
         steps:
-            - name: 'Build base SmartRedis docker image'
+            - name: 'Checkout SmartRedis'
               uses: actions/checkout@v2
+            - name: 'Build base SmartRedis docker image'
               run: |
-                cd ./images
+                export CLONE_DIR = $PWD
+                echo $PWD
                 echo "Using repo and sha:"
                 echo ${GITHUB_REPOSITORY}
                 echo $GITHUB_SHA
-                echo $PWD
-                docker build --build-arg CLONE_DIR=$PWD -t smartredis .
+                cd ./images
+                docker build --build-arg CLONE_DIR=$CLONE_DIR -t smartredis .
                 cd ../
             - name: 'Build C++ docker application'
               run: |
