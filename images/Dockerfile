@@ -30,8 +30,7 @@
 FROM ubuntu:21.04 as builder
 
 # Define default arguments for building
-ARG REMOTE=https://github.com/CrayLabs/SmartRedis.git
-ARG BRANCH_COMMIT=develop
+ARG CLONE_DIR=.
 
 # Install tooling
 RUN apt-get update && \
@@ -43,14 +42,14 @@ RUN ln -s /usr/bin/python3 /usr/bin/python
 RUN pip3 install cmake
 
 # Get source code
-WORKDIR /usr/local/src/
-RUN git config --global advice.detachedHead false && \
-    git clone $REMOTE
+#WORKDIR /usr/local/src/
+#RUN git config --global advice.detachedHead false && \
+#    git clone https://github.com/CrayLabs/SmartRedis.git --branch develop
 
-# Compile and install
-WORKDIR /usr/local/src/SmartRedis
-RUN git checkout $BRANCH_COMMIT
-RUN make lib && pip install .
+# Get source, compile and install
+WORKDIR /usr/local/src/
+COPY $CLONE_DIR/SmartRedis .
+RUN cd SmartRedis && make lib && pip install .
 
 # Copy install files and directories to /usr/local/lib and
 # usr/local/include and delete unnecessary build files
