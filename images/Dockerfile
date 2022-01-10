@@ -45,8 +45,8 @@ RUN pip3 install cmake
 # Get source code
 WORKDIR /usr/local/src/
 RUN git config --global advice.detachedHead false && \
-    git clone $REMOTE && \
-    git checkout $BRANCH_COMMIT
+    git clone $REMOTE
+RUN git checkout $BRANCH_COMMIT
 
 # Compile and install
 WORKDIR /usr/local/src/SmartRedis
