@@ -60,10 +60,10 @@ jobs:
               uses: actions/checkout@v2
             - name: 'Build base SmartRedis docker image'
               run: |
-                cd ./images \
-                echo "Using repo and sha:" \
-                echo ${GITHUB_REPOSITORY} \
-                echo $GITHUB_SHA \
+                cd ./images
+                echo "Using repo and sha:"
+                echo ${GITHUB_REPOSITORY}
+                echo $GITHUB_SHA
                 docker build --build-arg REMOTE=https://github.com/${GITHUB_REPOSITORY}.git \
                 --build-arg BRANCH_COMMIT=$GITHUB_SHA -t smartredis .
                 cd ../
