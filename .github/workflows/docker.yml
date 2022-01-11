@@ -60,7 +60,7 @@ jobs:
               uses: actions/checkout@v2
             - name: 'Build base SmartRedis docker image'
               run: |
-                export CLONE_DIR=$PWD/../
+                export CLONE_DIR=$PWD/..
                 echo $PWD
                 echo "Using repo and sha:"
                 echo ${GITHUB_REPOSITORY}
