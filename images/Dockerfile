@@ -48,7 +48,7 @@ RUN pip3 install cmake
 
 # Get source, compile and install
 WORKDIR /usr/local/src/
-COPY $CLONE_DIR/SmartRedis .
+COPY $CLONE_DIR../SmartRedis .
 RUN cd SmartRedis && make lib && pip install .
 
 # Copy install files and directories to /usr/local/lib and
