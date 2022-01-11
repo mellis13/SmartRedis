@@ -54,7 +54,8 @@ int main(int argc, char* argv[]) {
     size_t n_dims = 1;
 
     return_code = put_tensor(client, key, key_length,
-                            (void*)(&tensor), &dims, n_dims, type, layout);
+                            (void*)(&tensor), (const size_t*)(&dims),
+                            n_dims, type, layout);
 
     if (return_code != SRNoError) {
         return -1;
@@ -63,7 +64,8 @@ int main(int argc, char* argv[]) {
     double returned[3];
 
     return_code = unpack_tensor(client, key, key_length,
-                                (void*)(&returned), &dims, n_dims, type, layout);
+                                (void*)(&returned), (const size_t*)(&dims),
+                                n_dims, type, layout);
 
     if (return_code != SRNoError) {
         return -1;
