@@ -27,6 +27,7 @@
  */
 
 #include "stdio.h"
+#include "string.h"
 
 #include "c_client.h"
 #include "srexception.h"
@@ -61,8 +62,8 @@ int main(int argc, char* argv[]) {
 
     double returned[3];
 
-    return_code = get_tensor(client, key, key_length,
-                            (void*)(&returned), &dims, n_dims, type, layout);
+    return_code = unpack_tensor(client, key, key_length,
+                                (void*)(&returned), &dims, n_dims, type, layout);
 
     if (return_code != SRNoError) {
         return -1;
