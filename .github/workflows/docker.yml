@@ -67,9 +67,7 @@ jobs:
                 echo $GITHUB_SHA
                 ls .
                 ls ..
-                cd ./images
-                docker build --build-arg CLONE_DIR=$CLONE_DIR -t smartredis .
-                cd ../
+                docker build --build-arg CLONE_DIR=$CLONE_DIR -f ./images/Dockerfile -t smartredis .
             - name: 'Build C++ docker application'
               run: |
                 cd ./tests/docker/cpp

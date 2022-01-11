@@ -46,9 +46,10 @@ RUN pip3 install cmake
 #RUN git config --global advice.detachedHead false && \
 #    git clone https://github.com/CrayLabs/SmartRedis.git --branch develop
 
+COPY . /usr/local/src/SmartRedis
+
 # Get source, compile and install
 WORKDIR /usr/local/src/
-COPY ../../SmartRedis .
 RUN cd SmartRedis && make lib && pip install .
 
 # Copy install files and directories to /usr/local/lib and
