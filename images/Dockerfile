@@ -29,9 +29,6 @@
 ## Builder image
 FROM ubuntu:21.04 as builder
 
-# Define default arguments for building
-ARG CLONE_DIR=.
-
 # Install tooling
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -q -y --no-install-recommends \
@@ -41,12 +38,15 @@ RUN apt-get update && \
 RUN ln -s /usr/bin/python3 /usr/bin/python
 RUN pip3 install cmake
 
-# Get source code
+# Get source code from current clone
+COPY . /usr/local/src/SmartRedis
+
+# To build a docker image from another repository,
+# users should uncomment the following WORKDIR and
+# RUN commands and remove the COPY command above.
 #WORKDIR /usr/local/src/
 #RUN git config --global advice.detachedHead false && \
 #    git clone https://github.com/CrayLabs/SmartRedis.git --branch develop
-
-COPY . /usr/local/src/SmartRedis
 
 # Get source, compile and install
 WORKDIR /usr/local/src/
