@@ -59,5 +59,19 @@ int main(int argc, char* argv[]) {
         return -1;
     }
 
+    double returned[3];
+
+    return_code = get_tensor(client, key, key_length,
+                            (void*)(&returned), &dims, n_dims, type, layout);
+
+    if (return_code != SRNoError) {
+        return -1;
+    }
+
+    for (size_t i = 0; i < 3; i++) {
+        if (returned[i] != tensor[i])
+            return -1;
+    }
+
     return 0;
 }
