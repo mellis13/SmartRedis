@@ -63,4 +63,4 @@ RUN cp -r /usr/local/src/SmartRedis/install/lib/* /usr/local/lib/ && \
     mkdir /usr/local/include/smartredis && \
     cp -r /usr/local/src/SmartRedis/install/include/* /usr/local/include/smartredis/
 
-CMD ['sleep 100000']
+#CMD ['sleep 100000']
