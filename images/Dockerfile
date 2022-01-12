@@ -40,10 +40,10 @@ RUN apt-get update && \
     make cmake gcc g++ libc6-dev python3 libpython3-dev pip && \
     rm -rf /var/lib/apt/lists/*
 RUN ln -s /usr/bin/python3 /usr/bin/python
-RUN pip3 install cmake
+RUN pip3 install cmake && rm -rf ~/.cache/pip
 
 # Get source code from current clone
-COPY .  /usr/local/src/SmartRedis
+COPY . /usr/local/src/SmartRedis
 
 # To build a docker image from another repository,
 # users should uncomment the following WORKDIR and
@@ -54,10 +54,13 @@ COPY .  /usr/local/src/SmartRedis
 
 # Compile and install
 WORKDIR /usr/local/src/SmartRedis
-RUN make lib && pip install .
+RUN make clobber && make lib && pip install . && rm -rf ~/.cache/pip \
+    && rm -rf build tests examples images utils third-party doc images
 
 # Copy install files and directories to /usr/local/lib and
 # usr/local/include and delete unnecessary build files
 RUN cp -r /usr/local/src/SmartRedis/install/lib/* /usr/local/lib/ && \
     mkdir /usr/local/include/smartredis && \
     cp -r /usr/local/src/SmartRedis/install/include/* /usr/local/include/smartredis/
+
+CMD ['sleep 100000']
