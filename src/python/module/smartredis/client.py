@@ -35,6 +35,9 @@ from .error import *
 from .smartredisPy import PyClient
 from .util import Dtypes, init_default
 from .smartredisPy import RedisReplyError as RRE
+from .smartredisPy import RedisInternalError
+from .smartredisPy import RedisRuntimeError
+
 #from .smartredisPy import RedisRuntimeError as RRUE
 
 def exception_handler(func):
@@ -86,6 +89,9 @@ class Client(PyClient):
             raise RedisConnectionError("Could not connect to database. $SSDB not set")
         try:
             super().__init__(cluster)
+        except RedisRuntimeError as e:
+            print("Hey I caught the runtime error")
+            raise RedisRuntimeError(str(e)) from None
         except RuntimeError as e:
             raise RedisConnectionError(str(e)) from None
 
