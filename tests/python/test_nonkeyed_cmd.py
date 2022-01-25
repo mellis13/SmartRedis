@@ -61,7 +61,7 @@ def test_dbcluster_info_command(use_cluster):
         with pytest.raises(RedisReplyError):
             client.get_db_cluster_info(address)
 
-def test_dbcluster_info_command(use_cluster):
+def test_ai_info_command(use_cluster):
     # get env var to set through client init
     ssdb = os.environ["SSDB"]
     address = [ssdb]
