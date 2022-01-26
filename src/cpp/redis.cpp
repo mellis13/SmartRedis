@@ -414,8 +414,6 @@ CommandReply Redis::get_model_script_ai_info(const std::string& address,
                                  "non-cluster client connection.");
     }
 
-    std::string host_port = host + ":" + std::to_string(port);
-
     //Build the Command
     cmd.set_exec_address_port(host, port);
     cmd.add_field("AI.INFO");
