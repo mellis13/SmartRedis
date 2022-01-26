@@ -486,12 +486,22 @@ class PyClient
         std::vector<py::dict> get_db_cluster_info(std::vector<std::string> addresses);
 
         /*!
-        *   \brief Returns the AI.INFO command reply from any database shard
+        *   \brief Returns AI.INFO command reply information for the
+        *          script or model key at the provided addresses.
+        *   \param addresses std::vector of address of the database
+        *                    node (host:port)
+        *   \param key The model or script name
+        *   \param reset_stat Boolean indicating if the counters associated
+        *                     with the model or script should be reset.
+
         *   \returns A dictionary that maps AI.INFO field names to values
         *   \throws SmartRedis::RuntimeException or derivative error object if
         *           command execution or reply parsing fails.
         */
-        py::dict get_ai_info();
+        std::vector<py::dict>
+        get_ai_info(const std::vector<std::string>& addresses,
+                    const std::string& key,
+                    const bool reset_stat);
 
         /*!
         *   \brief Delete all the keys of the given database

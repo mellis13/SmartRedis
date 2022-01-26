@@ -466,68 +466,49 @@ SCENARIO("Testing Tensor Functions on Client Object", "[Client]")
     }
 }
 
-SCENARIO("Testing INFO Functions on Client Object", "[Client]")
-{
-
-    GIVEN("A Client object")
-    {
-        Client client(use_cluster());
-
-        WHEN("INFO or CLUSTER INFO is called on database with "
-             "an invalid address")
-        {
-            THEN("An error is thrown")
-            {
-                std::string db_address = ":00";
-
-                CHECK_THROWS_AS(client.get_db_node_info(db_address),
-                                RuntimeException);
-                CHECK_THROWS_AS(client.get_db_cluster_info(db_address),
-                                RuntimeException);
-            }
-        }
-
-        AND_WHEN("INFO is called on database with a valid address ")
-        {
-
-            THEN("No errors with be thrown for both cluster and "
-                 "non-cluster environemnts")
-            {
-                std::string db_address = parse_SSDB(std::getenv("SSDB"));
-
-                CHECK_NOTHROW(client.get_db_node_info(db_address));
-            }
-        }
-
-        AND_WHEN("CLUSTER INFO is called with a valid address ")
-        {
-            THEN("No errors are thrown if called on a cluster environment "
-                 "but errors are thrown if called on a non-cluster environment")
-            {
-                std::string db_address = parse_SSDB(std::getenv("SSDB"));
-                if (use_cluster())
-                    CHECK_NOTHROW(client.get_db_cluster_info(db_address));
-                else
-                    CHECK_THROWS_AS(client.get_db_cluster_info(db_address),
-                                    RuntimeException);
-            }
-        }
-    }
-}
-
 SCENARIO("Testing AI.INFO Functions on Client Object", "[Client]")
 {
     GIVEN("A Client object")
     {
         Client client(use_cluster());
 
-        WHEN("AI.INFO is called")
+        WHEN("AI.INFO called on database with an invalid address")
         {
-            THEN("No errors are thrown and the returned object is not empty")
+            THEN("An error is thrown")
             {
-                parsed_reply_map result;
-                CHECK_NOTHROW(result = client.get_ai_info());
-                CHECK(result.size() != 0);
+                std::string db_address = ":00";
+
+                CHECK_THROWS_AS(client.get_ai_info(db_address, "bad_key", false),
+                                RuntimeException);
+            }
+        }
+        AND_WHEN("AI.INFO is called on database with a valid address "\
+                 "but invalid key")
+        {
+            THEN("An error is thrown")
+            {
+                std::string db_address = parse_SSDB(std::getenv("SSDB"));
+
+                CHECK_THROWS_AS(client.get_ai_info(db_address, "bad_key", false),
+                                RuntimeException);
+            }
+        }
+        AND_WHEN("AI.INFO is called on database with a valid address "\
+                 "and valid key")
+        {
+            THEN("No errors are thrown and the returned list has non-zero size")
+            {
+                std::string db_address = parse_SSDB(std::getenv("SSDB"));
+                std::string model_key = "ai_info_model";
+                std::string model_file = "./../../mnist_data/mnist_cnn.pt";
+                std::string backend = "TORCH";
+                std::string device = "CPU";
+                parsed_reply_map reply;
+                CHECK_NOTHROW(client.set_model_from_file(model_key, model_file,
+                                                         backend, device));
+                CHECK_NOTHROW(reply = client.get_ai_info(db_address, model_key,
+                                                         false));
+                CHECK(reply.size() > 0);
             }
         }
     }
