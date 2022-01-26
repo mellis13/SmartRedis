@@ -600,7 +600,8 @@ class Client
         parsed_reply_map get_db_cluster_info(std::string address);
 
         /*!
-        *   \brief Returns the AI.INFO command reply from all database shard
+        *   \brief Returns the AI.INFO command reply from the database
+        *          shard at the provided address
         *   \param address The address of the database node (host:port)
         *   \param key The model or script name
         *   \param reset_stat Boolean indicating if the counters associated
