@@ -488,8 +488,8 @@ class PyClient
         /*!
         *   \brief Returns the AI.INFO command reply from the database
         *          shard at the provided address
-        *   \param addresses std::vector of address of the database
-        *                    node (host:port)
+        *   \param addresses std::vector of addresses of the database
+        *                    nodes (host:port)
         *   \param key The model or script key
         *   \param reset_stat Boolean indicating if the counters associated
         *                     with the model or script should be reset.
