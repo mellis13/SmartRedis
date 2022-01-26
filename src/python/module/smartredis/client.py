@@ -726,7 +726,6 @@ class Client(PyClient):
         :type reset_stat: bool
         :returns: A list of dictionaries with each entry in the
                   list corresponding to an address reply
-        :returns: Dictionary of AI.INFO reply fields
         :rtype: dict
         :raises RedisReplyError: if there is an error
                 in command execution or parsing the command reply.

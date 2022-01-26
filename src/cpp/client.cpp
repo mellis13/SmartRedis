@@ -784,7 +784,7 @@ parsed_reply_map Client::get_db_cluster_info(std::string address)
                                                      reply.str_len()));
 }
 
-// Returns the AI.INFO command reply addressed to any database shard
+// Returns the AI.INFO command reply
 parsed_reply_map Client::get_ai_info(const std::string& address,
                                      const std::string& key,
                                      const bool reset_stat)
