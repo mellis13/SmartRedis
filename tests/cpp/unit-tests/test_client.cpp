@@ -466,6 +466,55 @@ SCENARIO("Testing Tensor Functions on Client Object", "[Client]")
     }
 }
 
+SCENARIO("Testing INFO Functions on Client Object", "[Client]")
+{
+
+    GIVEN("A Client object")
+    {
+        Client client(use_cluster());
+
+        WHEN("INFO or CLUSTER INFO is called on database with "
+             "an invalid address")
+        {
+            THEN("An error is thrown")
+            {
+                std::string db_address = ":00";
+
+                CHECK_THROWS_AS(client.get_db_node_info(db_address),
+                                RuntimeException);
+                CHECK_THROWS_AS(client.get_db_cluster_info(db_address),
+                                RuntimeException);
+            }
+        }
+
+        AND_WHEN("INFO is called on database with a valid address ")
+        {
+
+            THEN("No errors with be thrown for both cluster and "
+                 "non-cluster environemnts")
+            {
+                std::string db_address = parse_SSDB(std::getenv("SSDB"));
+
+                CHECK_NOTHROW(client.get_db_node_info(db_address));
+            }
+        }
+
+        AND_WHEN("CLUSTER INFO is called with a valid address ")
+        {
+            THEN("No errors are thrown if called on a cluster environment "
+                 "but errors are thrown if called on a non-cluster environment")
+            {
+                std::string db_address = parse_SSDB(std::getenv("SSDB"));
+                if (use_cluster())
+                    CHECK_NOTHROW(client.get_db_cluster_info(db_address));
+                else
+                    CHECK_THROWS_AS(client.get_db_cluster_info(db_address),
+                                    RuntimeException);
+            }
+        }
+    }
+}
+
 SCENARIO("Testing AI.INFO Functions on Client Object", "[Client]")
 {
     GIVEN("A Client object")
