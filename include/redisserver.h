@@ -334,7 +334,7 @@ class RedisServer {
         *   \param reset_stat Boolean indicating if the counters associated
         *                     with the model or script should be reset.
         *   \returns The CommandReply that contains the result
-        *            of the get script execution on the server
+        *            of the AI.INFO execution on the server
         */
         virtual CommandReply
         get_model_script_ai_info(const std::string& address,
