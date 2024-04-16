@@ -313,7 +313,6 @@ PipelineReply RedisCluster::run_via_unordered_pipelines(CommandList& cmd_list)
                 std::cout<<"Shard "<<j<<" is "<<success_status[j]<<std::endl;
             }
             std::cout<<"The error response is "<<error_response.what()<<std::endl;
-            throw "Shard " + std::to_string(i) + " failed.";
             throw error_response;
         }
     }
