@@ -238,8 +238,12 @@ PipelineReply RedisCluster::run_via_unordered_pipelines(CommandList& cmd_list)
     volatile size_t pipeline_completion_count = 0;
     size_t num_shards = shard_cmd_index_list.size();
     Exception error_response = Exception("no error");
-    std::vector<bool> success_status(num_shards, false);
+    bool success_status[num_shards];
     std::mutex results_mutex;
+
+    for (size_t s = 0; s < num_shards; s++) {
+        success_status[s] = false;
+    }
 
     // Loop over all shards and execute pipelines
     for (size_t s = 0; s < num_shards; s++) {
@@ -267,7 +271,6 @@ PipelineReply RedisCluster::run_via_unordered_pipelines(CommandList& cmd_list)
             PipelineReply reply;
             try {
                 reply = _run_pipeline(shard_cmds[s], shard_prefix);
-                std::cout<<"Shard "<<std::to_string(s)<<"succeeded"<<std::endl;
                 success_status[s] = true;
             }
             catch (Exception& e) {
@@ -306,11 +309,11 @@ PipelineReply RedisCluster::run_via_unordered_pipelines(CommandList& cmd_list)
         std::cout<<"Checking shard "<<i<<std::endl;
         if (!success_status[i]) {
             for(size_t j = 0; j < num_shards; j++) {
-                std::cout<<"The size of the shard command list " << j << "is "<<shard_cmd_index_list[j].size()<<std::endl;
+                std::cout<<"The size of the shard command list " << j << " is "<<shard_cmd_index_list[j].size()<<std::endl;
                 std::cout<<"Shard "<<j<<" is "<<success_status[j]<<std::endl;
             }
-            throw "Shard " + std::to_string(i) + " failed.";
             std::cout<<"The error response is "<<error_response.what()<<std::endl;
+            throw "Shard " + std::to_string(i) + " failed.";
             throw error_response;
         }
     }
