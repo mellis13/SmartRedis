@@ -238,8 +238,12 @@ PipelineReply RedisCluster::run_via_unordered_pipelines(CommandList& cmd_list)
     volatile size_t pipeline_completion_count = 0;
     size_t num_shards = shard_cmd_index_list.size();
     Exception error_response = Exception("no error");
-    bool success_status[num_shards];
+    bool* success_status = new bool[num_shards];
     std::mutex results_mutex;
+
+    for (size_t s = 0; s < num_shards; s++) {
+        success_status[s] = false;
+    }
 
     // Loop over all shards and execute pipelines
     for (size_t s = 0; s < num_shards; s++) {
@@ -271,6 +275,7 @@ PipelineReply RedisCluster::run_via_unordered_pipelines(CommandList& cmd_list)
             }
             catch (Exception& e) {
                 error_response = e;
+                std::cout<<"AN ERROR WAS FOUND !!!!!! "<<e.what()<<std::endl;
                 success_status[s] = false;
             }
 
@@ -301,7 +306,13 @@ PipelineReply RedisCluster::run_via_unordered_pipelines(CommandList& cmd_list)
 
     // Throw an exception if one was generated in processing the threads
     for (size_t i = 0; i < num_shards; i++) {
+        std::cout<<"Checking shard "<<i<<std::endl;
         if (!success_status[i]) {
+            for(size_t j = 0; j < num_shards; j++) {
+                std::cout<<"The size of the shard command list " << j << " is "<<shard_cmd_index_list[j].size()<<std::endl;
+                std::cout<<"Shard "<<j<<" is "<<success_status[j]<<std::endl;
+            }
+            std::cout<<"The error response is "<<error_response.what()<<std::endl;
             throw error_response;
         }
     }
@@ -309,6 +320,8 @@ PipelineReply RedisCluster::run_via_unordered_pipelines(CommandList& cmd_list)
     // Reorder the command replies in all_replies to align
     // with order of execution
     all_replies.reorder(cmd_list_index_ooe);
+
+    delete[] success_status;
 
     return all_replies;
 }
@@ -1551,3 +1564,5 @@ std::string RedisCluster::to_string() const
     result += RedisServer::to_string();
     return result;
 }
+
+
