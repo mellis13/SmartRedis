@@ -238,7 +238,7 @@ PipelineReply RedisCluster::run_via_unordered_pipelines(CommandList& cmd_list)
     volatile size_t pipeline_completion_count = 0;
     size_t num_shards = shard_cmd_index_list.size();
     Exception error_response = Exception("no error");
-    bool success_status[num_shards];
+    bool success_status = new bool[num_shards];
     std::mutex results_mutex;
 
     for (size_t s = 0; s < num_shards; s++) {
@@ -321,6 +321,8 @@ PipelineReply RedisCluster::run_via_unordered_pipelines(CommandList& cmd_list)
     // Reorder the command replies in all_replies to align
     // with order of execution
     all_replies.reorder(cmd_list_index_ooe);
+
+    delete[] success_status;
 
     return all_replies;
 }
