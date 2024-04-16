@@ -305,7 +305,7 @@ PipelineReply RedisCluster::run_via_unordered_pipelines(CommandList& cmd_list)
     for (size_t i = 0; i < num_shards; i++) {
         std::cout<<"Checking shard "<<i<<std::endl;
         if (!success_status[i]) {
-            for(int j = 0; j < num_shards; j++) {
+            for(size_t j = 0; j < num_shards; j++) {
                 std::cout<<"The size of the shard command list " << j << "is "<<shard_cmd_index_list[j].size()<<std::endl;
                 std::cout<<"Shard "<<j<<" is "<<success_status[j]<<std::endl;
             }
