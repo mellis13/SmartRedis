@@ -57,15 +57,15 @@ env:
 jobs:
 
   run_tests:
-    name: Run smartredis tests using ${{ matrix.os }}, Python ${{ matrix.py_v }}, and ${{ matrix.compiler }}
+    name: Python ${{ matrix.py_v }}, ${{ matrix.compiler }}, ${{ matrix.link_type }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-22.04] # cannot test on macOS as docker isn't supported on Mac
+        os: [ubuntu-24.04] # cannot test on macOS as docker isn't supported on Mac
         rai_v: [1.2.7] # versions of RedisAI
         py_v: ['3.9.x', '3.10.x', '3.11.x'] # versions of Python
-        compiler: [nvhpc-23-11, intel-2024.0, gcc-11, gcc-12] # intel compiler, and versions of GNU compiler
+        compiler: [nvhpc-24-5, intel-2024.0, gcc-11, gcc-12, gcc-13, gcc-14] # intel compiler, and versions of GNU compiler
         link_type: [shared, static]
     env:
       COMPILER: ${{ matrix.compiler }} # used when the compiler is gcc/gfortran
@@ -76,7 +76,7 @@ jobs:
       - name: Maximize build space
         uses: easimon/maximize-build-space@master
         with:
-          root-reserve-mb: 30720
+          root-reserve-mb: 40960
           remove-dotnet: true
           remove-android: true
           remove-haskell: true
@@ -84,10 +84,10 @@ jobs:
           remove-docker-images: true
 
       # download a copy of SmartRedis before running CI tests
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       # Setup python within the container
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.py_v }}
 
@@ -99,7 +99,7 @@ jobs:
           sudo apt-get -y update &&
           sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test &&
           sudo apt-get -y update &&
-          sudo apt-get -y install -y gcc-${GCC_V} gfortran-${GCC_V} g++-${GCC_V} mpich &&
+          sudo apt-get -y install -y gcc-${GCC_V} gfortran-${GCC_V} g++-${GCC_V} openmpi-bin libopenmpi-dev &&
           sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-${GCC_V} 100 \
             --slave /usr/bin/gfortran gfortran /usr/bin/gfortran-${GCC_V} \
             --slave /usr/bin/g++ g++ /usr/bin/g++-${GCC_V} \

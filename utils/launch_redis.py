@@ -164,9 +164,8 @@ def create_db(n_nodes, port, device, rai_ver, udsport):
         / f"third-party/RedisAI/{rai_ver}/install-{test_device}"
     ).resolve()
     redisai = redisai_dir / "redisai.so"
-    tf_loc = redisai_dir / "backends/redisai_tensorflow/redisai_tensorflow.so"
     torch_loc = redisai_dir / "backends/redisai_torch/redisai_torch.so"
-    rai_clause = f"--loadmodule {redisai} TF {tf_loc} TORCH {torch_loc}"
+    rai_clause = f"--loadmodule {redisai} TORCH {torch_loc}"
     uds_clause = ""
     if is_uds:
         prepare_uds_socket(udsport)
@@ -198,20 +197,29 @@ def create_db(n_nodes, port, device, rai_ver, udsport):
 
     # Make sure that all servers are up
     # Let exceptions propagate to the caller
-    check_availability(n_nodes, port, udsport)
     for proc in procs:
-        _ = proc.communicate(timeout=15)
+        out, err = proc.communicate(timeout=15)
         if proc.returncode != 0:
+            print("STDERR:")
+            print(err)
+            print("STDOUT:")
+            print(out)
             raise RuntimeError("Failed to launch Redis server!")
+    check_availability(n_nodes, port, udsport)
 
     # Create cluster for clustered Redis request
     if n_nodes > 1:
+        sleep(5)
         cluster_str = " ".join(f"127.0.0.1:{port + i}" for i in range(n_nodes))
         cmd = f"{rediscli} --cluster create {cluster_str} --cluster-replicas 0 --cluster-yes"
         print(cmd)
-        proc = run(cmd.split(), encoding="utf-8", shell=False)
+        proc = run(cmd.split(), encoding="utf-8", shell=False, capture_output=True)
         if proc.returncode != 0:
             print(f'{rediscli} returncode: {proc.returncode}')
+            print("STDOUT:")
+            print(proc.stdout)
+            print("STDERR:")
+            print(proc.stderr)
             raise SubprocessError("Cluster could not be created!")
         sleep(2)
         print("Cluster has been setup!")
