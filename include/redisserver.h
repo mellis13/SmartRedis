@@ -658,11 +658,6 @@ class RedisServer {
         const SRObject* _context;
 
         /*!
-        *   \brief Seeding for the random number engine
-        */
-        std::random_device _rd;
-
-        /*!
         *   \brief Random number generator
         */
         std::mt19937 _gen;

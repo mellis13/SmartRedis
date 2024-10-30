@@ -192,7 +192,7 @@ class Exception: public std::exception
     *   \brief Get a string representation of the exception class
     *   \returns Stringified version of the class name
     */
-    virtual std::string exception_class() {
+    virtual std::string exception_class() const{
         return std::string("Exception");
     }
 
@@ -247,7 +247,7 @@ class BadAllocException: public Exception
     *   \brief Get a string representation of the exception class
     *   \returns Stringified version of the class name
     */
-    virtual std::string exception_class() {
+    virtual std::string exception_class() const override {
         return std::string("BadAllocException");
     }
 };
@@ -278,7 +278,7 @@ class DatabaseException: public Exception
     *   \brief Get a string representation of the exception class
     *   \returns Stringified version of the class name
     */
-    virtual std::string exception_class() {
+    virtual std::string exception_class() const override {
         return std::string("DatabaseException");
     }
 };
@@ -309,7 +309,7 @@ class RuntimeException: public Exception
     *   \brief Get a string representation of the exception class
     *   \returns Stringified version of the class name
     */
-    virtual std::string exception_class() {
+    virtual std::string exception_class() const override{
         return std::string("RuntimeException");
     }
 };
@@ -340,7 +340,7 @@ class ParameterException: public Exception
     *   \brief Get a string representation of the exception class
     *   \returns Stringified version of the class name
     */
-    virtual std::string exception_class() {
+    virtual std::string exception_class() const override{
         return std::string("ParameterException");
     }
 };
@@ -371,7 +371,7 @@ class TimeoutException: public Exception
     *   \brief Get a string representation of the exception class
     *   \returns Stringified version of the class name
     */
-    virtual std::string exception_class() {
+    virtual std::string exception_class() const override{
         return std::string("TimeoutException");
     }
 };
@@ -402,7 +402,7 @@ class InternalException: public Exception
     *   \brief Get a string representation of the exception class
     *   \returns Stringified version of the class name
     */
-    virtual std::string exception_class() {
+    virtual std::string exception_class() const override {
         return std::string("InternalException");
     }
 };
@@ -433,7 +433,7 @@ class KeyException: public Exception
     *   \brief Get a string representation of the exception class
     *   \returns Stringified version of the class name
     */
-    virtual std::string exception_class() {
+    virtual std::string exception_class() const override {
         return std::string("KeyException");
     }
 };
