@@ -1,5 +1,20 @@
 # Changelog
 
+### Develop
+
+To be released at a future time.
+
+Description
+
+-  Reenable move semantics and fix compiler warnings.
+
+Detailed Notes
+
+-  Fix compiler warnings stemming from override and const
+   keywords as well as move semantics impliclty disabled
+   because of std::random_device.
+   ([PR520](https://github.com/CrayLabs/SmartRedis/pull/520))
+
 ### 0.6.1
 
 Released on 27 September, 2024
