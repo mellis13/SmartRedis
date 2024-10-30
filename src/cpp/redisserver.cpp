@@ -39,7 +39,7 @@ using namespace SmartRedis;
 // RedisServer constructor
 RedisServer::RedisServer(ConfigOptions* cfgopts)
     : _cfgopts(cfgopts), _context(cfgopts->_get_log_context()),
-      _gen(_rd())
+    _gen(std::random_device()())
 {
     _connection_timeout = _cfgopts->_resolve_integer_option(
         _CONN_TIMEOUT_ENV_VAR, _DEFAULT_CONN_TIMEOUT);
