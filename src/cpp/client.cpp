@@ -362,9 +362,27 @@ void Client::put_bytes(const std::string& name,
         throw SRRuntimeException("put_bytes failed");
 }
 
-// Get byte data and fill an already allocated array memory space that
-// has the specified size. This method is the most memory 
-// efficient way to retrieve tensor data.
+// Get byte data and return to the user via modifying the
+// supplied void pointer.
+void Client::get_bytes(const std::string& name,
+                       void*& data,
+                       size_t& n_bytes)
+{
+    std::string get_key = _build_tensor_key(name, true);
+    CommandReply reply = _redis_server->get_bytes(get_key);
+
+    // TODO We don't have a way with CommandReply to transfer ownership of a str() reply
+    // to an outside pointer.  For now we do a naive memcopy, 
+    // but we really shouldn't have to do that
+    // We could set the internal str reply value to NULL and the redisreply destructor
+    // which calls free on it will likely do a no-op, but this isn't proven.
+    n_bytes = reply.str_len();
+    data = malloc(n_bytes);
+    std::memcpy(data, (void*)(reply.str()), n_bytes);
+}
+
+// Get byte data and fill an already allocated array 
+// memory space that has the specified size.
 void Client::unpack_bytes(const std::string& name,
                           void* data,
                           const size_t n_bytes)
@@ -374,6 +392,13 @@ void Client::unpack_bytes(const std::string& name,
 
     std::string get_key = _build_tensor_key(name, true);
     CommandReply reply = _redis_server->get_bytes(get_key);
+
+    if (n_bytes != reply.str_len()) {
+        throw SRRuntimeException("Provided number of bytes of " + 
+                                 std::to_string(n_bytes) + " " +
+                                 "match retrieved data size of " +
+                                 std::to_string(reply.str_len()) + ".");
+    }
 
     std::memcpy(data, reply.str(), reply.str_len());
 }
@@ -2231,25 +2256,6 @@ TensorBase* Client::_get_tensorbase_obj(const std::string& name)
         throw SRBadAllocException("tensor");
     }
     return ptr;
-}
-
-// Get the bytes stored in the database and allocate memory via malloc 
-// to hold it (deep copy)
-void Client::_get_bytes_no_mem_handling(const std::string& name,
-                                        void*& data, 
-                                        size_t& n_bytes)
-{
-    std::string get_key = _build_tensor_key(name, true);
-    CommandReply reply = _redis_server->get_bytes(get_key);
-
-    // TODO We don't have a way with CommandReply to transfer ownership of a str() reply
-    // to an outside pointer.  For now we do a naive memcopy, 
-    // but we really shouldn't have to do that
-    // We could set the internal str reply value to NULL and the redisreply destructor
-    // which calls free on it will likely do a no-op, but this isn't proven.
-    n_bytes = reply.str_len();
-    data = malloc(n_bytes);
-    std::memcpy(data, (void*)(reply.str()), n_bytes);
 }
 
 // Determine datset name from aggregation list entry

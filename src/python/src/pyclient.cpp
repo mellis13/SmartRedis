@@ -204,10 +204,11 @@ py::bytes PyClient::get_bytes(const std::string& name)
         size_t n_bytes = 0;
 
         // Get the bytes and store in data pointer and update n_bytes
-        _client->_get_bytes_no_mem_handling(name, data, n_bytes);
+        _client->get_bytes(name, data, n_bytes);
 
-        // TODO by using py::bytes we are doing another explicit deep copy 
-        // and _get_bytes_no_mem_handling has already done a deep copy
+        // TODO by using py::bytes makes another copy.  It would
+        // be ideal to transfer ownership because get_bytes gives
+        // back new, unmanaged memory that could be transferred
         py::bytes py_bytes = py::bytes((char*)data, n_bytes);
         free(data);
         return py_bytes;

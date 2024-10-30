@@ -237,6 +237,28 @@ class Client : public SRObject
                        const size_t n_bytes);
 
         /*!
+        *   \brief Retrieve bytes from the database and place into a new
+        *          memory buffer
+        *   \details The key used to locate the stored bytes
+        *            may be formed by applying a prefix to the supplied
+        *            name. See set_data_source()
+        *            and use_tensor_ensemble_prefix() for more details.
+        *            Unlike other "get" operations in the client, the
+        *            the byte data memeory is allocated but not managed
+        *            by the client.  The caller is responsible for invoking
+        *            free() on the returned memory.
+        *   \param name The name for referencing the bytes in the database
+        *   \param data A user-provided pointer that will be modified to
+        *               point to a new block of memory containing the bytes
+        *   \param n_bytes A user-provided size_t variable that will be modified
+        *                  to indicate the total number of bytes.
+        *   \throw SmartRedis::Exception if get bytes command fails
+        */
+        void get_bytes(const std::string& name,
+                       void*& data,
+                       size_t& n_bytes);
+
+        /*!
         *   \brief Retrieve bytes from the database and place into memory
         *          provided by the caller
         *   \details The key used to locate the stored bytes
@@ -1529,19 +1551,6 @@ class Client : public SRObject
         *   \returns A TensorBase object.
         */
         TensorBase* _get_tensorbase_obj(const std::string& name);
-
-        /*!
-        *   \brief This function retrieves bytes stored in the database
-        *          and attaches them to the provided void* pointer.
-        *          The provided n_bytes is modified (by reference) to 
-        *          inform the caller the number of bytes associated 
-        *          with the pointer.  The caller is responsible
-        *          for freeing the memory with free.
-        *   \param name  The name used to reference the bytes
-        */
-        void _get_bytes_no_mem_handling(const std::string& name,
-                                        void*& data, 
-                                        size_t& n_bytes);
 
         /*!
         *   \brief The name of the hash field used to confirm that the
