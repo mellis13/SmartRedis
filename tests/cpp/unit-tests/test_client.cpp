@@ -516,12 +516,14 @@ SCENARIO("Testing Bytes Functions on Client Object", "[Client]")
                     unsigned char* r_pointer = reinterpret_cast<unsigned char*>(retrieved_bytes_values);
                     CHECK((r_pointer)[i] == bytes_value[i]);
                 }
+
+                free(retrieved_bytes_values);
             }
 
             THEN("The bytes can be retrieved by clients.unpack_bytes()")
             {
                 size_t retrieved_n_bytes = n_bytes;
-                void* retrieved_bytes_values = NULL;
+                unsigned char* retrieved_bytes_values = (unsigned char*)malloc(n_bytes);
                 client.unpack_bytes(bytes_name, 
                                     retrieved_bytes_values, 
                                     retrieved_n_bytes);
@@ -533,6 +535,8 @@ SCENARIO("Testing Bytes Functions on Client Object", "[Client]")
                     unsigned char* r_pointer = reinterpret_cast<unsigned char*>(retrieved_bytes_values);
                     CHECK((r_pointer)[i] == bytes_value[i]);
                 }
+
+                free(retrieved_bytes_values);
             }
 
             AND_WHEN("The bytes are removed from the database")
