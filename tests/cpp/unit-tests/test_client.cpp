@@ -498,6 +498,11 @@ SCENARIO("Testing Bytes Functions on Client Object", "[Client]")
                 CHECK(client.bytes_exists(bytes_name) == true);
             }
 
+            THEN("Polling for the bytes returns true")
+            {
+                CHECK(client.poll_bytes(bytes_name, 2, 5) == true);
+            }
+
             THEN("The bytes can be retrieved by clients.get_bytes()")
             {
                 // Declare the retrieved bytes size as something that
@@ -545,6 +550,11 @@ SCENARIO("Testing Bytes Functions on Client Object", "[Client]")
                 THEN("The bytes no longer exist in the database") 
                 {
                     CHECK(client.bytes_exists(bytes_name) == false);
+                }
+
+                THEN("Polling for the bytes returns false")
+                {
+                    CHECK(client.poll_bytes(bytes_name, 2, 5) == false);
                 }
             }
         }
