@@ -24,10 +24,11 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import numpy as np
 import os
 
+import numpy as np
 from smartredis import Client, Dataset
+
 
 def test_prefixing(context, monkeypatch):
     # configure prefix variables
@@ -54,6 +55,7 @@ def test_prefixing(context, monkeypatch):
     assert c.tensor_exists("test_tensor")
     assert c.key_exists("prefix_test.test_tensor")
     assert not c.key_exists("test_tensor")
+
 
 def test_model_prefixing(mock_model, context, monkeypatch):
     # configure prefix variables
@@ -101,7 +103,9 @@ def test_list_prefixing(context, monkeypatch):
     assert c.key_exists("prefix_test.dataset_test_list")
     assert not c.key_exists("dataset_test_list")
 
+
 # ------------ helper functions ---------------------------------
+
 
 def create_dataset(name):
     array = np.array([1, 2, 3, 4])

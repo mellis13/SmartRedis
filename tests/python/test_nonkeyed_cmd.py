@@ -28,21 +28,21 @@ import os
 
 import numpy as np
 import pytest
-from smartredis import Client
-from smartredis import ConfigOptions
+from smartredis import Client, ConfigOptions
 from smartredis.error import *
 
 
 def test_dbnode_info_command(context):
     ssdb = os.environ["SSDB"]
-    addresses = ssdb.split(',')
+    addresses = ssdb.split(",")
     client = Client(None, logger_name=context)
     info = client.get_db_node_info(addresses)
     assert len(info) > 0
 
+
 def test_dbcluster_info_command(mock_model, context):
     ssdb = os.environ["SSDB"]
-    addresses = ssdb.split(',')
+    addresses = ssdb.split(",")
     co = ConfigOptions().create_from_environment("")
     client = Client(co, logger_name=context)
 
@@ -72,12 +72,13 @@ def test_dbcluster_info_command(mock_model, context):
     with pytest.raises(RedisRuntimeError):
         client.get_ai_info(addresses, "bad_key")
 
+
 def test_flushdb_command(context):
     # from within the testing framework, there is no way
     # of knowing each db node that is being used, so skip
     # if on cluster
     ssdb = os.environ["SSDB"]
-    addresses = ssdb.split(',')
+    addresses = ssdb.split(",")
     if os.environ["SR_DB_TYPE"] == "Clustered":
         return
 
@@ -130,8 +131,12 @@ def test_save_command(context):
 
     # for each address, check that the timestamp of the last SAVE increases after calling Client::save
     for address in addresses:
-        save_time_before = client.get_db_node_info([address])[0]["Persistence"]["rdb_last_save_time"]
+        save_time_before = client.get_db_node_info([address])[0]["Persistence"][
+            "rdb_last_save_time"
+        ]
         client.save([address])
-        save_time_after = client.get_db_node_info([address])[0]["Persistence"]["rdb_last_save_time"]
+        save_time_after = client.get_db_node_info([address])[0]["Persistence"][
+            "rdb_last_save_time"
+        ]
 
         assert save_time_before <= save_time_after

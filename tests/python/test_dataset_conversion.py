@@ -618,6 +618,7 @@ def test_raise_exception_if_xarray_not_found(monkeypatch):
     and provide instruction on how to fix it
     """
     import sys
+
     import smartredis.dataset_utils as _dsu
 
     monkeypatch.setattr(sys, "path", [])

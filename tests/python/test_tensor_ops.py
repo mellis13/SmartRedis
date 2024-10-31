@@ -25,6 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import os
+
 import numpy as np
 import pytest
 from smartredis import Client
@@ -78,14 +79,12 @@ def test_delete_tensor(context):
 
 
 def test_rename_nonexisting_key(context):
-
     client = Client(None, logger_name=context)
     with pytest.raises(RedisReplyError):
         client.rename_tensor("not-a-tensor", "still-not-a-tensor")
 
 
 def test_copy_nonexistant_key(context):
-
     client = Client(None, logger_name=context)
     with pytest.raises(RedisReplyError):
         client.copy_tensor("not-a-tensor", "still-not-a-tensor")

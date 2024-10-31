@@ -29,10 +29,11 @@ import inspect
 import os
 import os.path as osp
 import typing as t
+
 import numpy as np
 
-from .dataset import Dataset
 from .configoptions import ConfigOptions
+from .dataset import Dataset
 from .error import RedisConnectionError
 from .smartredisPy import PyClient
 from .smartredisPy import RedisReplyError as PybindRedisReplyError
@@ -94,7 +95,7 @@ class Client(SRObject):
         self,
         cluster: bool,
         address: t.Optional[str] = None,
-        logger_name: str = "Default"
+        logger_name: str = "Default",
     ) -> PyClient:
         """Initialize a SmartRedis client
 
@@ -128,8 +129,7 @@ class Client(SRObject):
 
     @staticmethod
     def __standard_construction(
-        config_options: t.Optional[ConfigOptions] = None,
-        logger_name: str = "Default"
+        config_options: t.Optional[ConfigOptions] = None, logger_name: str = "Default"
     ) -> PyClient:
         """Initialize a RedisAI client
 
@@ -552,7 +552,7 @@ class Client(SRObject):
         name: str,
         fn_name: str,
         inputs: t.Union[str, t.List[str]],
-        outputs: t.Union[str, t.List[str]]
+        outputs: t.Union[str, t.List[str]],
     ) -> None:
         """Execute TorchScript stored inside the database
 
