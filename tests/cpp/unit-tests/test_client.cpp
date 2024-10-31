@@ -532,8 +532,7 @@ SCENARIO("Testing Bytes Functions on Client Object", "[Client]")
                 CHECK(retrieved_n_bytes == n_bytes);
 
                 for(int i = 0; i < n_bytes; i++) {
-                    unsigned char* r_pointer = reinterpret_cast<unsigned char*>(retrieved_bytes_values);
-                    CHECK((r_pointer)[i] == bytes_value[i]);
+                    CHECK((retrieved_bytes_values)[i] == bytes_value[i]);
                 }
 
                 free(retrieved_bytes_values);
