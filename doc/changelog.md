@@ -6,11 +6,14 @@ Released on 27 September, 2024
 
 Description
 
+-  Fix lint issues using make lint
 -  Fix RedisAI build to allow for compilation with GCC-14
 -  Fix a memory leak in the Fortran Dataset implementation
 
 Detailed Notes
 
+-  Fix lint issues using make lint
+   ([PR522](https://github.com/CrayLabs/SmartRedis/pull/522))
 -  Fix RedisAI build to allow for compilation with GCC-14. Also,
    we only use the Torch backend and change the compilation of
    RedisAI to use CMake (like SmartSim)
