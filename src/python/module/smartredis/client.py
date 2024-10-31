@@ -26,12 +26,13 @@
 
 # pylint: disable=too-many-lines,too-many-public-methods
 import inspect
+import io
 import os
 import os.path as osp
 import typing as t
 
+
 import numpy as np
-import io
 
 from .configoptions import ConfigOptions
 from .dataset import Dataset
@@ -1472,7 +1473,7 @@ class Client(SRObject):
         """
         typecheck(use_prefix, "use_prefix", bool)
         return self._client.use_dataset_ensemble_prefix(use_prefix)
-    
+
     @exception_handler
     def use_bytes_ensemble_prefix(self, use_prefix: bool) -> None:
         """Control whether byte keys are prefixed (e.g. in an

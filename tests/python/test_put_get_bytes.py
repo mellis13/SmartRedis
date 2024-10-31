@@ -24,10 +24,10 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import numpy as np
-import os
 import io
+import os
 
+import numpy as np
 from smartredis import Client
 
 # ----- Tests -----------------------------------------------------------
@@ -38,12 +38,11 @@ def test_put_get_bytes(mock_data, context):
 
     client = Client(None, logger_name=context)
 
-    data = np.random.rand(2,8,4,2,30)
+    data = np.random.rand(2, 8, 4, 2, 30)
     bytes = io.BytesIO(data.tobytes())
-    
+
     client.put_bytes("python_bytes", bytes)
 
     retrieved_bytes = client.get_bytes("python_bytes")
 
-    assert(bytes.getvalue() == retrieved_bytes.getvalue())
-
+    assert bytes.getvalue() == retrieved_bytes.getvalue()
