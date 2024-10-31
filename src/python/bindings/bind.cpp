@@ -97,7 +97,7 @@ PYBIND11_MODULE(smartredisPy, m) {
         .CLIENT_METHOD(model_exists)
         .CLIENT_METHOD(tensor_exists)
         .CLIENT_METHOD(dataset_exists)
-        .CLIENT_METHOD(bytes_exist)
+        .CLIENT_METHOD(bytes_exists)
         .CLIENT_METHOD(poll_model)
         .CLIENT_METHOD(poll_tensor)
         .CLIENT_METHOD(poll_dataset)
