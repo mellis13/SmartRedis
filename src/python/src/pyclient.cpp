@@ -215,6 +215,15 @@ py::bytes PyClient::get_bytes(const std::string& name)
     });
 }
 
+
+void PyClient::delete_bytes(const std::string& name)
+{
+    MAKE_CLIENT_API({
+        _client->delete_bytes(name);
+    });
+}
+
+
 void PyClient::delete_tensor(const std::string& name)
 {
     MAKE_CLIENT_API({
@@ -523,6 +532,13 @@ bool PyClient::dataset_exists(const std::string& name)
     });
 }
 
+bool PyClient::bytes_exists(const std::string& name)
+{
+    return MAKE_CLIENT_API({
+        return this->_client->bytes_exists(name);
+    });
+}
+
 bool PyClient::poll_tensor(const std::string& name,
                            int poll_frequency_ms,
                            int num_tries)
@@ -547,6 +563,15 @@ bool PyClient::poll_model(const std::string& name,
 {
     return MAKE_CLIENT_API({
         return _client->poll_model(name, poll_frequency_ms, num_tries);
+    });
+}
+
+bool PyClient::poll_bytes(const std::string& name,
+                          int poll_frequency_ms,
+                          int num_tries)
+{
+    return MAKE_CLIENT_API({
+        return _client->poll_bytes(name, poll_frequency_ms, num_tries);
     });
 }
 
@@ -578,6 +603,12 @@ void PyClient::use_list_ensemble_prefix(bool use_prefix)
     });
 }
 
+void PyClient::use_bytes_ensemble_prefix(bool use_prefix)
+{
+    MAKE_CLIENT_API({
+        _client->use_bytes_ensemble_prefix(use_prefix);
+    });
+}
 
 std::vector<py::dict> PyClient::get_db_node_info(std::vector<std::string> addresses)
 {

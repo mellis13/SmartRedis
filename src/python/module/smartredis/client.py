@@ -262,6 +262,22 @@ class Client(SRObject):
         self._client.delete_tensor(name)
 
     @exception_handler
+    def delete_bytes(self, name: str) -> None:
+        """Delete a bytes from the database
+
+        The bytes key used to locate the bytes to be deleted
+        may be formed by applying a prefix to the supplied
+        name. See set_data_source()
+        and use_bytes_ensemble_prefix() for more details.
+
+        :param name: name bytes is stored at
+        :type name: str
+        :raises RedisReplyError: if deletion fails
+        """
+        typecheck(name, "name", str)
+        self._client.delete_bytes(name)
+
+    @exception_handler
     def copy_tensor(self, src_name: str, dest_name: str) -> None:
         """Copy a tensor at one name to another name
 
@@ -1171,6 +1187,24 @@ class Client(SRObject):
         return self._client.model_exists(name)
 
     @exception_handler
+    def bytes_exists(self, name: str) -> bool:
+        """Check if bytes exists in the database
+
+        The bytes key used to check for existence
+        may be formed by applying a prefix to the supplied
+        name. See set_data_source()
+        and use_bytes_ensemble_prefix() for more details.
+
+        :param name: The bytes name that will be checked in the database
+        :type name: str
+        :returns: Returns true if the bytes exists in the database
+        :rtype: bool
+        :raises RedisReplyError: if checking for bytes existence causes an error
+        """
+        typecheck(name, "name", str)
+        return self._client.bytes_exists(name)
+
+    @exception_handler
     def key_exists(self, key: str) -> bool:
         """Check if the key exists in the database
 
@@ -1286,6 +1320,33 @@ class Client(SRObject):
         typecheck(poll_frequency_ms, "poll_frequency_ms", int)
         typecheck(num_tries, "num_tries", int)
         return self._client.poll_model(name, poll_frequency_ms, num_tries)
+
+    @exception_handler
+    def poll_bytes(self, name: str, poll_frequency_ms: int, num_tries: int) -> bool:
+        """Check if a bytes exists in the database
+
+        The check is repeated at a specified polling interval and for
+        a specified number of retries.
+        The bytes key used to check for existence
+        may be formed by applying a prefix to the supplied
+        name. See set_data_source()
+        and use_bytes_ensemble_prefix() for more details.
+
+        :param name: The bytes name that will be checked in the database
+        :type name: str
+        :param poll_frequency_ms: The polling interval, in milliseconds
+        :type poll_frequency_ms: int
+        :param num_tries: The total number of retries for the check
+        :type num_tries: int
+        :returns: Returns true if the bytes key is found within the
+                  specified number of tries, otherwise false.
+        :rtype: bool
+        :raises RedisReplyError: if an error occurs while polling
+        """
+        typecheck(name, "name", str)
+        typecheck(poll_frequency_ms, "poll_frequency_ms", int)
+        typecheck(num_tries, "num_tries", int)
+        return self._client.poll_bytes(name, poll_frequency_ms, num_tries)
 
     @exception_handler
     def set_data_source(self, source_id: str) -> None:
@@ -1411,6 +1472,28 @@ class Client(SRObject):
         """
         typecheck(use_prefix, "use_prefix", bool)
         return self._client.use_dataset_ensemble_prefix(use_prefix)
+    
+    @exception_handler
+    def use_bytes_ensemble_prefix(self, use_prefix: bool) -> None:
+        """Control whether byte keys are prefixed (e.g. in an
+        ensemble) when forming database keys
+
+        This function can be used to avoid key collisions in an ensemble
+        by prepending the string value from the environment variable SSKEYIN
+        to tensor names.
+        Prefixes will only be used if they were previously set through
+        environment variables SSKEYIN and SSKEYOUT.
+        Keys for entities created before this function is called
+        will not be retroactively prefixed.
+        By default, the client prefixes byte keys when a prefix is
+        available.
+
+        :param use_prefix: If set to true, all future operations on raw bytes
+                           will use a prefix, if available.
+        :type use_prefix: bool
+        """
+        typecheck(use_prefix, "use_prefix", bool)
+        return self._client.use_bytes_ensemble_prefix(use_prefix)
 
     @exception_handler
     def get_db_node_info(self, addresses: t.List[str]) -> t.List[t.Dict]:

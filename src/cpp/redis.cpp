@@ -210,6 +210,17 @@ CommandReply Redis::get_bytes(const std::string& key)
     return run(cmd);
 }
 
+// Get bytes from the server
+CommandReply Redis::delete_bytes(const std::string& key)
+{
+    // Build the command
+    SingleKeyCommand cmd;
+    cmd << "UNLINK" << Keyfield(key);
+
+    // Run it
+    return run(cmd);
+}
+
 // Get a Tensor from the server
 CommandReply Redis::get_tensor(const std::string& key)
 {

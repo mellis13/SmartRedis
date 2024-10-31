@@ -407,6 +407,17 @@ CommandReply RedisCluster::get_bytes(const std::string& key)
     return run(cmd);
 }
 
+// Delete a tensor in the database
+CommandReply RedisCluster::delete_bytes(const std::string& key)
+{
+    // Build the command
+    SingleKeyCommand cmd;
+    cmd << "UNLINK" << Keyfield(key);
+
+    // Run it
+    return run(cmd);
+}
+
 // Get a Tensor from the server
 CommandReply RedisCluster::get_tensor(const std::string& key)
 {

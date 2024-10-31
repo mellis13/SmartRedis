@@ -264,7 +264,7 @@ class Client : public SRObject
         *   \details The key used to locate the stored bytes
         *            may be formed by applying a prefix to the supplied
         *            name. See set_data_source()
-        *            and use_tensor_ensemble_prefix() for more details.
+        *            and use_bytes_ensemble_prefix() for more details.
         *   \param name The name for referencing the bytes in the database
         *   \param data A buffer into which to place byte data
         *   \param n_bytes The number of bytes in the provided data
@@ -273,6 +273,18 @@ class Client : public SRObject
         void unpack_bytes(const std::string& name,
                           void* data,
                           const size_t n_bytes);
+
+        /*!
+        *   \brief Delete bytes from the database
+        *   \details The bytes key used to locate the bytes to be
+        *            deleted may be formed by applying a prefix to the
+        *            supplied name. See set_data_source()
+        *            and use_bytes_ensemble_prefix() for more details.
+        *   \param name The name of the bytes to delete
+        *   \throw SmartRedis::Exception if delete bytes command fails
+        */
+        void delete_bytes(const std::string& name);
+
         /*!
         *   \brief Retrieve the tensor data, dimensions, and type for the
         *          provided tensor key. This function will allocate and retain
@@ -846,18 +858,6 @@ class Client : public SRObject
         bool key_exists(const std::string& key);
 
         /*!
-        *   \brief Check if a model (or script) key exists in the database
-        *   \details The model or script key used to check for existence
-        *            may be formed by applying a prefix to the supplied
-        *            name. See set_data_source()
-        *            and use_model_ensemble_prefix() for more details.
-        *   \param name The model/script name to be checked in the database
-        *   \returns Returns true if the model exists in the database
-        *   \throw SmartRedis::Exception if model exists command fails
-        */
-        bool model_exists(const std::string& name);
-
-        /*!
         *   \brief Check if a tensor key exists in the database
         *   \details The tensor key used to check for existence
         *            may be formed by applying a prefix to the supplied
@@ -880,6 +880,30 @@ class Client : public SRObject
         *   \throw SmartRedis::Exception if dataset exists command fails
         */
         bool dataset_exists(const std::string& name);
+
+        /*!
+        *   \brief Check if a model (or script) key exists in the database
+        *   \details The model or script key used to check for existence
+        *            may be formed by applying a prefix to the supplied
+        *            name. See set_data_source()
+        *            and use_model_ensemble_prefix() for more details.
+        *   \param name The model/script name to be checked in the database
+        *   \returns Returns true if the model exists in the database
+        *   \throw SmartRedis::Exception if model exists command fails
+        */
+        bool model_exists(const std::string& name);
+
+        /*!
+        *   \brief Check if bytes exists in the database
+        *   \details The bytes key used to check for existence
+        *            may be formed by applying a prefix to the supplied
+        *            name. See set_data_source()
+        *            and use_dataset_ensemble_prefix() for more details.
+        *   \param name The bytes name to be checked in the database
+        *   \returns Returns true if the bytes exists in the database
+        *   \throw SmartRedis::Exception if bytes exists command fails
+        */
+        bool bytes_exists(const std::string& name);
 
         /*!
         *   \brief Check if a key exists in the database, repeating the check
@@ -950,6 +974,25 @@ class Client : public SRObject
         *   \throw SmartRedis::Exception if poll model command fails
         */
         bool poll_model(const std::string& name,
+                        int poll_frequency_ms,
+                        int num_tries);
+
+        /*!
+        *   \brief Check if bytes exists in the database, repeating
+        *          the check at a specified polling interval
+        *   \details The bytes key used to check for existence
+        *            may be formed by applying a prefix to the supplied
+        *            name. See set_data_source()
+        *            and use_bytes_ensemble_prefix() for more details.
+        *   \param name The bytes name to be checked in the database
+        *   \param poll_frequency_ms The time delay between checks,
+        *                            in milliseconds
+        *   \param num_tries The total number of times to check for the name
+        *   \returns Returns true if the bytes is found within the
+        *            specified number of tries, otherwise false.
+        *   \throw SmartRedis::Exception if poll bytes command fails
+        */
+        bool poll_bytes(const std::string& name,
                         int poll_frequency_ms,
                         int num_tries);
 
@@ -1060,6 +1103,25 @@ class Client : public SRObject
         *         aggregation list prefixing
         */
         void use_list_ensemble_prefix(bool use_prefix);
+
+        /*!
+        *   \brief Control whether raw bytes are prefixed
+        *   \details This function can be used to avoid key collisions in an
+        *            ensemble by prepending the string value from the
+        *            environment variable SSKEYIN and/or SSKEYOUT to
+        *            raw byte names.  Prefixes will only be used if
+        *            they were previously set through the environment variables
+        *            SSKEYOUT and SSKEYIN. Keys for raw bytes created
+        *            before this function is called will not be retroactively
+        *            prefixed. By default, the client prefixes raw bytes
+        *            keys with the first prefix specified with the SSKEYIN
+        *            and SSKEYOUT environment variables.
+        *  \param use_prefix If set to true, all future operations
+        *                    on raw bytes will use a prefix, if available.
+        *  \throw SmartRedis::Exception for failed activation of
+        *         raw byte prefixing
+        */
+        void use_bytes_ensemble_prefix(bool use_prefix);
 
         /*!
         *   \brief Returns information about the given database node
@@ -1620,6 +1682,12 @@ class Client : public SRObject
         bool _use_list_prefix;
 
         /*!
+        * \brief Flag determining whether prefixes should be used
+        *        for raw byte keys.
+        */
+        bool _use_bytes_prefix;
+
+        /*!
         * \brief Our configuration options, used to access runtime settings
         */
         ConfigOptions* _cfgopts;
@@ -1714,6 +1782,15 @@ class Client : public SRObject
         */
         inline std::string _build_list_key(const std::string& list_name,
                                            bool on_db);
+        /*!
+        * \brief Build full formatted key for bytes, based on
+        *        current prefix settings.
+        * \param name Unprefixed bytes name
+        * \param on_db Indicates whether the key refers to an entity
+        *              which is already in the database.
+        */
+        inline std::string _build_bytes_key(const std::string& name,
+                                            bool on_db);
 
         /*!
         *   \brief Append the Command associated with
