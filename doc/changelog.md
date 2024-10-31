@@ -6,10 +6,17 @@ To be released at a future time.
 
 Description
 
+-  Add Client API functions to put, get, unpack,
+   delete, poll, and check for existance of raw bytes for the
+   C++ and Python clients.
 -  Reenable move semantics and fix compiler warnings.
 
 Detailed Notes
 
+-  Add Client API functions to put, get, unpack,
+   delete, poll, and check for existance of raw bytes for the
+   C++ and Python clients.
+   ([PR521](https://github.com/CrayLabs/SmartRedis/pull/521))
 -  Fix compiler warnings stemming from override and const
    keywords as well as move semantics impliclty disabled
    because of std::random_device.
