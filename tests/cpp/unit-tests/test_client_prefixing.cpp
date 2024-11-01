@@ -152,7 +152,7 @@ SCENARIO("Testing Client prefixing")
             unsigned char bytes_value[n_bytes] = {0x00, 0x65, 0x6C, 0x6C, 0x6F};
 
             // Put bytes into the database
-            client.put_bytes(bytes_key, (void*)bytes_values, n_bytes);
+            client.put_bytes(bytes_key, (void*)bytes_value, n_bytes);
 
             // Check that the bytes exists
             CHECK(client.bytes_exists(bytes_key));
