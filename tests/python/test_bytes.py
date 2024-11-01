@@ -67,7 +67,7 @@ def test_poll_bytes(mock_data, context):
 
     client = Client(None, logger_name=context)
 
-    assert client.poll_bytes("python_bytes_poll", 0.1, 5) == False
+    assert client.poll_bytes("python_bytes_poll", 1, 5) == False
 
     data = np.random.rand(2, 8, 4, 2, 30)
     bytes = io.BytesIO(data.tobytes())
