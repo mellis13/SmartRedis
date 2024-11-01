@@ -47,7 +47,14 @@ int main(int argc, char* argv[]) {
 
   std::vector<char> output_bytes(n_bytes, 0);
 
-  client.unpack_bytes(key, output_bytes.data(), n_bytes);
+  size_t received_bytes = 0;
+  client.unpack_bytes(key, output_bytes.data(), n_bytes, 
+                      received_bytes);
+
+    if (received_bytes != n_bytes) {
+      std::cout<<"Output byte size "<<received_bytes<<" does not match."<<std::endl;
+        throw std::exception();
+    }
 
   for(int i = 0; i < n_bytes; i++) {
     if (output_bytes[i] != input_bytes[i]) {
