@@ -224,7 +224,9 @@ class RedisCluster : public RedisServer
 
         /*!
         *   \brief Put bytes on the server
-        *   \param tensor The bytes to put on the server
+        *   \param key The key at which to store the bytes
+        *   \param bytes The bytes to put on the server
+        *   \param num_bytes The number of bytes
         *   \returns The CommandReply from the put bytes
         *            command execution
         *   \throw SmartRedis::Exception if bytes storage fails
@@ -235,7 +237,7 @@ class RedisCluster : public RedisServer
 
         /*!
         *   \brief Get bytes from the server
-        *   \param key The name of the bytes to retrieve
+        *   \param key The database key for the bytes
         *   \returns The CommandReply from the get bytes server
         *            command execution
         *   \throw SmartRedis::Exception if bytes retrieval fails

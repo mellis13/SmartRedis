@@ -407,7 +407,7 @@ CommandReply RedisCluster::get_bytes(const std::string& key)
     return run(cmd);
 }
 
-// Delete a tensor in the database
+// Delete bytes on the server
 CommandReply RedisCluster::delete_bytes(const std::string& key)
 {
     // Build the command

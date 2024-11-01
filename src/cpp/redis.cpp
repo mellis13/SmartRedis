@@ -210,7 +210,7 @@ CommandReply Redis::get_bytes(const std::string& key)
     return run(cmd);
 }
 
-// Get bytes from the server
+// Delete bytes on the server
 CommandReply Redis::delete_bytes(const std::string& key)
 {
     // Build the command

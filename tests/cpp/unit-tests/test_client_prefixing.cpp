@@ -98,7 +98,7 @@ SCENARIO("Testing Client prefixing")
             reset_env_vars(old_keyin, old_keyout);
 
             // Free test memory
-            free(array)
+            free(array);
         }
         THEN("Client prefixing can be used for datasets")
         {
@@ -133,7 +133,7 @@ SCENARIO("Testing Client prefixing")
             reset_env_vars(old_keyin, old_keyout);
 
             // Free test memory
-            free(array)
+            free(array);
         }
         THEN("Client prefixing can be used for bytes")
         {
@@ -164,7 +164,7 @@ SCENARIO("Testing Client prefixing")
             reset_env_vars(old_keyin, old_keyout);
 
             // Free test memory
-            free(array)
+            free(array);
         }
 
     }

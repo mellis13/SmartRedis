@@ -224,9 +224,13 @@ class Client : public SRObject
                         const SRMemoryLayout mem_layout);
 
         /*!
-        *   \brief Puts a raw byte string into the database
+        *   \brief Puts a byte string into the database
         *   \details The provided byte string is placed into the database
-        *            without any type associated with the bytes.
+        *            without any type associated with the bytes.  
+        *            The final key under which the bytes are stored
+        *            may be formed by applying a prefix to the supplied
+        *            name. See use_bytes_ensemble_prefix() for
+        *            more details.
         *   \param name The name for referencing the bytes in the database
         *   \param data The data
         *   \param n_bytes The number of bytes in the provided data

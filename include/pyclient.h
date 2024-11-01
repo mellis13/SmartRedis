@@ -102,6 +102,10 @@ class PyClient : public PySRObject
 
         /*!
         *   \brief Put bytes into the database
+        *   \details The key used to place the bytes 
+        *            may be formed by applying a prefix to the
+        *            supplied name. See set_data_source()
+        *            and use_bytes_ensemble_prefix() for more details.
         *   \param name The name to associate with the bytes
         *              in the database
         *   \param data The bytes to store
@@ -124,7 +128,7 @@ class PyClient : public PySRObject
         /*!
         *   \brief Check if bytes exists in the database, repeating
         *          the check at a specified polling interval
-        *   \details The bytes key used to check for existence
+        *   \details The key used to check for existence
         *            may be formed by applying a prefix to the supplied
         *            name. See set_data_source()
         *            and use_bytes_ensemble_prefix() for more details.
@@ -591,10 +595,10 @@ class PyClient : public PySRObject
 
         /*!
         *   \brief Check if bytes exists in the database
-        *   \details The bytes key used to check for existence
+        *   \details The key used to check for existence
         *            may be formed by applying a prefix to the supplied
         *            name. See set_data_source()
-        *            and use_dataset_ensemble_prefix() for more details.
+        *            and use_bytes_ensemble_prefix() for more details.
         *   \param name The bytes name to be checked in the database
         *   \returns Returns true if the bytes exists in the database
         *   \throw RuntimeException for all client errors

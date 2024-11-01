@@ -195,7 +195,7 @@ class Client(SRObject):
 
         The final key under which the bytes are stored
         may be formed by applying a prefix to the supplied
-        name. See use_tensor_ensemble_prefix() for more details.
+        name. See use_bytes_ensemble_prefix() for more details.
 
         :param name: name for bytes to be stored at
         :type name: str
@@ -232,7 +232,7 @@ class Client(SRObject):
         The key used to locate the bytes
         may be formed by applying a prefix to the supplied
         name. See set_data_source()
-        and use_tensor_ensemble_prefix() for more details.
+        and use_bytes_ensemble_prefix() for more details.
 
         :param name: name associated with the bytes
         :type name: str

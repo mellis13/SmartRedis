@@ -371,6 +371,9 @@ void Client::get_bytes(const std::string& name,
     std::string get_key = _build_bytes_key(name, true);
     CommandReply reply = _redis_server->get_bytes(get_key);
 
+    if (reply.has_error())
+        throw SRRuntimeException("put_bytes failed");
+
     // TODO We don't have a way with CommandReply to transfer ownership of a str() reply
     // to an outside pointer.  For now we do a naive memcopy, 
     // but we really shouldn't have to do that
@@ -393,6 +396,9 @@ void Client::unpack_bytes(const std::string& name,
     std::string get_key = _build_bytes_key(name, true);
     CommandReply reply = _redis_server->get_bytes(get_key);
 
+    if (reply.has_error())
+        throw SRRuntimeException("put_bytes failed");
+
     if (n_bytes != reply.str_len()) {
         throw SRRuntimeException("Provided number of bytes of " + 
                                  std::to_string(n_bytes) + " " +
@@ -411,7 +417,8 @@ void Client::delete_bytes(const std::string& name)
 
     std::string key = _build_bytes_key(name, true);
     CommandReply reply = _redis_server->delete_bytes(key);
-    _report_reply_errors(reply, "delete_bytes failed");
+    if (reply.has_error())
+        throw SRRuntimeException("put_bytes failed");
 }
 
 // Get the tensor data, dimensions, and type for the provided tensor name.
