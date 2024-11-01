@@ -92,6 +92,6 @@ def test_delete_bytes(mock_data, context):
 
     assert client.bytes_exists("python_bytes_deleted")
 
-    client.delete_bytes("python_bytes_deleted", bytes)
+    client.delete_bytes("python_bytes_deleted")
 
     assert not client.bytes_exists("python_bytes_deleted")
