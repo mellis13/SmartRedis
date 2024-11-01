@@ -25,16 +25,16 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import os
+from os import environ
 
 import numpy as np
 import pytest
-from os import environ
 from smartredis import *
 from smartredis.error import *
 from smartredis.util import Dtypes
 
+test_gpu = environ.get("SR_TEST_DEVICE", "cpu").lower() == "gpu"
 
-test_gpu = environ.get("SR_TEST_DEVICE","cpu").lower() == "gpu"
 
 @pytest.fixture
 def cfg_opts() -> ConfigOptions:
@@ -102,14 +102,16 @@ def test_missing_script_function(context):
     c = Client(None, logger_name=context)
     c.set_function("bad-function", bad_function)
     with pytest.raises(RedisReplyError):
-        c.run_script("bad-function", "not-a-function-in-script", ["bad-func-tensor"], ["output"])
+        c.run_script(
+            "bad-function", "not-a-function-in-script", ["bad-func-tensor"], ["output"]
+        )
     with pytest.raises(RedisReplyError):
-        c.run_script("bad-function", "not-a-function-in-script", "bad-func-tensor", "output")
+        c.run_script(
+            "bad-function", "not-a-function-in-script", "bad-func-tensor", "output"
+        )
 
-@pytest.mark.skipif(
-    not test_gpu,
-    reason="SR_TEST_DEVICE does not specify 'gpu'"
-)
+
+@pytest.mark.skipif(not test_gpu, reason="SR_TEST_DEVICE does not specify 'gpu'")
 def test_bad_function_execution_multigpu(use_cluster, context):
     """Error raised inside function"""
 
@@ -118,24 +120,41 @@ def test_bad_function_execution_multigpu(use_cluster, context):
     data = np.array([1, 2, 3, 4])
     c.put_tensor("bad-func-tensor", data)
     with pytest.raises(RedisReplyError):
-        c.run_script_multigpu("bad-function", "bad_function", ["bad-func-tensor"], ["output"], 0, 0, 2)
+        c.run_script_multigpu(
+            "bad-function", "bad_function", ["bad-func-tensor"], ["output"], 0, 0, 2
+        )
     with pytest.raises(RedisReplyError):
-        c.run_script_multigpu("bad-function", "bad_function", "bad-func-tensor", "output", 0, 0, 2)
+        c.run_script_multigpu(
+            "bad-function", "bad_function", "bad-func-tensor", "output", 0, 0, 2
+        )
 
 
-@pytest.mark.skipif(
-    not test_gpu,
-    reason="SR_TEST_DEVICE does not specify 'gpu'"
-)
+@pytest.mark.skipif(not test_gpu, reason="SR_TEST_DEVICE does not specify 'gpu'")
 def test_missing_script_function_multigpu(context):
     """User requests to run a function not in the script"""
 
     c = Client(None, logger_name=context)
     c.set_function_multigpu("bad-function", bad_function, 0, 1)
     with pytest.raises(RedisReplyError):
-        c.run_script_multigpu("bad-function", "not-a-function-in-script", ["bad-func-tensor"], ["output"], 0, 0, 2)
+        c.run_script_multigpu(
+            "bad-function",
+            "not-a-function-in-script",
+            ["bad-func-tensor"],
+            ["output"],
+            0,
+            0,
+            2,
+        )
     with pytest.raises(RedisReplyError):
-        c.run_script_multigpu("bad-function", "not-a-function-in-script", "bad-func-tensor", "output", 0, 0, 2)
+        c.run_script_multigpu(
+            "bad-function",
+            "not-a-function-in-script",
+            "bad-func-tensor",
+            "output",
+            0,
+            0,
+            2,
+        )
 
 
 def test_wrong_model_name(mock_data, mock_model, context):
@@ -172,8 +191,10 @@ def test_bad_device(context):
     with pytest.raises(TypeError):
         c.set_script("key", "some_script", device="not-a-gpu")
 
+
 #####
 # Test type errors from bad parameter types to Client API calls
+
 
 def test_bad_type_put_tensor(context):
     c = Client(None, logger_name=context)
@@ -264,6 +285,7 @@ def test_bad_type_set_function(context):
     with pytest.raises(TypeError):
         c.set_function("key", bad_function, 42)
 
+
 def test_bad_type_set_function_multigpu(context):
     c = Client(None, logger_name=context)
     with pytest.raises(TypeError):
@@ -275,9 +297,10 @@ def test_bad_type_set_function_multigpu(context):
     with pytest.raises(TypeError):
         c.set_function_multigpu("key", bad_function, 0, "not an integer")
     with pytest.raises(ValueError):
-        c.set_function_multigpu("key", bad_function, -1, 1) # invalid first GPU
+        c.set_function_multigpu("key", bad_function, -1, 1)  # invalid first GPU
     with pytest.raises(ValueError):
-        c.set_function_multigpu("key", bad_function, 0, 0) # invalid num GPUs
+        c.set_function_multigpu("key", bad_function, 0, 0)  # invalid num GPUs
+
 
 def test_bad_type_set_script(context):
     c = Client(None, logger_name=context)
@@ -290,6 +313,7 @@ def test_bad_type_set_script(context):
         c.set_script(key, 42, device)
     with pytest.raises(TypeError):
         c.set_script(key, script, 42)
+
 
 def test_bad_type_set_script_multigpu(context):
     c = Client(None, logger_name=context)
@@ -310,6 +334,7 @@ def test_bad_type_set_script_multigpu(context):
     with pytest.raises(ValueError):
         c.set_script_multigpu(key, script, first_gpu, 0)
 
+
 def test_bad_type_set_script_from_file(context):
     c = Client(None, logger_name=context)
     key = "key_for_script"
@@ -321,6 +346,7 @@ def test_bad_type_set_script_from_file(context):
         c.set_script_from_file(key, 42, device)
     with pytest.raises(TypeError):
         c.set_script_from_file(key, scriptfile, 42)
+
 
 def test_bad_type_set_script_from_file_multigpu(context):
     c = Client(None, logger_name=context)
@@ -336,6 +362,7 @@ def test_bad_type_set_script_from_file_multigpu(context):
         c.set_script_from_file_multigpu(key, scriptfile, "not an integer", num_gpus)
     with pytest.raises(TypeError):
         c.set_script_from_file_multigpu(key, scriptfile, first_gpu, "not an integer")
+
 
 def test_bad_type_get_script(context):
     c = Client(None, logger_name=context)
@@ -393,11 +420,17 @@ def test_bad_type_run_script_multigpu_str(context):
     with pytest.raises(TypeError):
         c.run_script_multigpu(key, fn_name, inputs, 42, offset, first_gpu, num_gpus)
     with pytest.raises(TypeError):
-        c.run_script_multigpu(key, fn_name, inputs, outputs, "not an integer", first_gpu, num_gpus)
+        c.run_script_multigpu(
+            key, fn_name, inputs, outputs, "not an integer", first_gpu, num_gpus
+        )
     with pytest.raises(TypeError):
-        c.run_script_multigpu(key, fn_name, inputs, outputs, offset, "not an integer", num_gpus)
+        c.run_script_multigpu(
+            key, fn_name, inputs, outputs, offset, "not an integer", num_gpus
+        )
     with pytest.raises(TypeError):
-        c.run_script_multigpu(key, fn_name, inputs, outputs, offset, first_gpu, "not an integer")
+        c.run_script_multigpu(
+            key, fn_name, inputs, outputs, offset, first_gpu, "not an integer"
+        )
     with pytest.raises(ValueError):
         c.run_script_multigpu(key, fn_name, inputs, outputs, offset, -1, num_gpus)
     with pytest.raises(ValueError):
@@ -422,11 +455,17 @@ def test_bad_type_run_script_multigpu_list(context):
     with pytest.raises(TypeError):
         c.run_script_multigpu(key, fn_name, inputs, 42, offset, first_gpu, num_gpus)
     with pytest.raises(TypeError):
-        c.run_script_multigpu(key, fn_name, inputs, outputs, "not an integer", first_gpu, num_gpus)
+        c.run_script_multigpu(
+            key, fn_name, inputs, outputs, "not an integer", first_gpu, num_gpus
+        )
     with pytest.raises(TypeError):
-        c.run_script_multigpu(key, fn_name, inputs, outputs, offset, "not an integer", num_gpus)
+        c.run_script_multigpu(
+            key, fn_name, inputs, outputs, offset, "not an integer", num_gpus
+        )
     with pytest.raises(TypeError):
-        c.run_script_multigpu(key, fn_name, inputs, outputs, offset, first_gpu, "not an integer")
+        c.run_script_multigpu(
+            key, fn_name, inputs, outputs, offset, first_gpu, "not an integer"
+        )
     with pytest.raises(ValueError):
         c.run_script_multigpu(key, fn_name, inputs, outputs, offset, -1, num_gpus)
     with pytest.raises(ValueError):
@@ -455,9 +494,12 @@ def test_bad_type_set_model(mock_model, context):
     with pytest.raises(TypeError):
         c.set_model("simple_cnn", model, "TORCH", "CPU", batch_size="not_an_integer")
     with pytest.raises(TypeError):
-        c.set_model("simple_cnn", model, "TORCH", "CPU", min_batch_size="not_an_integer")
+        c.set_model(
+            "simple_cnn", model, "TORCH", "CPU", min_batch_size="not_an_integer"
+        )
     with pytest.raises(TypeError):
         c.set_model("simple_cnn", model, "TORCH", "CPU", tag=42)
+
 
 def test_bad_type_set_model_multigpu(mock_model, context):
     c = Client(None, logger_name=context)
@@ -478,9 +520,13 @@ def test_bad_type_set_model_multigpu(mock_model, context):
     with pytest.raises(ValueError):
         c.set_model_multigpu("simple_cnn", model, "TORCH", 0, 0)
     with pytest.raises(TypeError):
-        c.set_model_multigpu("simple_cnn", model, "TORCH", 0, 1, batch_size="not_an_integer")
+        c.set_model_multigpu(
+            "simple_cnn", model, "TORCH", 0, 1, batch_size="not_an_integer"
+        )
     with pytest.raises(TypeError):
-        c.set_model_multigpu("simple_cnn", model, "TORCH", 0, 1, min_batch_size="not_an_integer")
+        c.set_model_multigpu(
+            "simple_cnn", model, "TORCH", 0, 1, min_batch_size="not_an_integer"
+        )
     with pytest.raises(TypeError):
         c.set_model_multigpu("simple_cnn", model, "TORCH", 0, 1, tag=42)
 
@@ -501,11 +547,16 @@ def test_bad_type_set_model_from_file(context):
     with pytest.raises(TypeError):
         c.set_model_from_file("simple_cnn", modelfile, "TORCH", "BAD_DEVICE")
     with pytest.raises(TypeError):
-        c.set_model_from_file("simple_cnn", modelfile, "TORCH", "CPU", batch_size="not_an_integer")
+        c.set_model_from_file(
+            "simple_cnn", modelfile, "TORCH", "CPU", batch_size="not_an_integer"
+        )
     with pytest.raises(TypeError):
-        c.set_model_from_file("simple_cnn", modelfile, "TORCH", "CPU", min_batch_size="not_an_integer")
+        c.set_model_from_file(
+            "simple_cnn", modelfile, "TORCH", "CPU", min_batch_size="not_an_integer"
+        )
     with pytest.raises(TypeError):
         c.set_model_from_file("simple_cnn", modelfile, "TORCH", "CPU", tag=42)
+
 
 def test_bad_type_set_model_from_file_multigpu(context):
     modelfile = "bad filename but right parameter type"
@@ -517,19 +568,32 @@ def test_bad_type_set_model_from_file_multigpu(context):
     with pytest.raises(TypeError):
         c.set_model_from_file_multigpu("simple_cnn", modelfile, 42, 0, 1)
     with pytest.raises(TypeError):
-        c.set_model_from_file_multigpu("simple_cnn", modelfile, "UNSUPPORTED_ENGINE", 0, 1)
+        c.set_model_from_file_multigpu(
+            "simple_cnn", modelfile, "UNSUPPORTED_ENGINE", 0, 1
+        )
     with pytest.raises(TypeError):
-        c.set_model_from_file_multigpu("simple_cnn", modelfile, "TORCH", "not an integer", 1)
+        c.set_model_from_file_multigpu(
+            "simple_cnn", modelfile, "TORCH", "not an integer", 1
+        )
     with pytest.raises(TypeError):
-        c.set_model_from_file_multigpu("simple_cnn", modelfile, "TORCH", 0, "not an integer")
+        c.set_model_from_file_multigpu(
+            "simple_cnn", modelfile, "TORCH", 0, "not an integer"
+        )
     with pytest.raises(TypeError):
-        c.set_model_from_file_multigpu("simple_cnn", modelfile, "TORCH", 0, 1, batch_size="not_an_integer")
+        c.set_model_from_file_multigpu(
+            "simple_cnn", modelfile, "TORCH", 0, 1, batch_size="not_an_integer"
+        )
     with pytest.raises(TypeError):
-        c.set_model_from_file_multigpu("simple_cnn", modelfile, "TORCH", 0, 1, min_batch_size="not_an_integer")
+        c.set_model_from_file_multigpu(
+            "simple_cnn", modelfile, "TORCH", 0, 1, min_batch_size="not_an_integer"
+        )
     with pytest.raises(TypeError):
-        c.set_model_from_file_multigpu("simple_cnn", modelfile, "TORCH", 0, 1, min_batch_timeout="not_an_integer")
+        c.set_model_from_file_multigpu(
+            "simple_cnn", modelfile, "TORCH", 0, 1, min_batch_timeout="not_an_integer"
+        )
     with pytest.raises(TypeError):
         c.set_model_from_file_multigpu("simple_cnn", modelfile, "TORCH", 0, 1, tag=42)
+
 
 def test_bad_type_run_model(context):
     c = Client(None, logger_name=context)
@@ -552,12 +616,13 @@ def test_bad_type_run_model_multigpu(context):
     with pytest.raises(ValueError):
         c.run_model_multigpu("simple_cnn", 0, 0, 0)
 
+
 def test_bad_type_delete_model_multigpu(context):
     c = Client(None, logger_name=context)
     with pytest.raises(TypeError):
         c.delete_model_multigpu(42, 0, 1)
     with pytest.raises(TypeError):
-        c.delete_model_multigpu("simple_cnn",  "not an integer", 1)
+        c.delete_model_multigpu("simple_cnn", "not an integer", 1)
     with pytest.raises(TypeError):
         c.delete_model_multigpu("simple_cnn", 0, "not an integer")
     with pytest.raises(ValueError):
@@ -565,19 +630,21 @@ def test_bad_type_delete_model_multigpu(context):
     with pytest.raises(ValueError):
         c.delete_model_multigpu("simple_cnn", 0, 0)
 
+
 def test_bad_type_delete_script_multigpu(context):
     c = Client(None, logger_name=context)
     script_name = "my_script"
     with pytest.raises(TypeError):
         c.delete_script_multigpu(42, 0, 1)
     with pytest.raises(TypeError):
-        c.delete_script_multigpu(script_name,  "not an integer", 1)
+        c.delete_script_multigpu(script_name, "not an integer", 1)
     with pytest.raises(TypeError):
         c.delete_script_multigpu(script_name, 0, "not an integer")
     with pytest.raises(ValueError):
         c.delete_script_multigpu(script_name, -1, 1)
     with pytest.raises(ValueError):
         c.delete_script_multigpu(script_name, 0, 0)
+
 
 def test_bad_type_tensor_exists(context):
     c = Client(None, logger_name=context)
@@ -745,15 +812,18 @@ def test_bad_type_save(context):
     with pytest.raises(TypeError):
         c.save("not a list")
 
+
 def test_bad_type_append_to_list(context):
     c = Client(None, logger_name=context)
     with pytest.raises(TypeError):
         c.append_to_list(42, 42)
 
+
 def test_bad_type_delete_list(context):
     c = Client(None, logger_name=context)
     with pytest.raises(TypeError):
         c.delete_list(42)
+
 
 def test_bad_type_copy_list(context):
     c = Client(None, logger_name=context)
@@ -762,6 +832,7 @@ def test_bad_type_copy_list(context):
     with pytest.raises(TypeError):
         c.copy_list("src", 42)
 
+
 def test_bad_type_rename_list(context):
     c = Client(None, logger_name=context)
     with pytest.raises(TypeError):
@@ -769,10 +840,12 @@ def test_bad_type_rename_list(context):
     with pytest.raises(TypeError):
         c.rename_list("src", 42)
 
+
 def test_bad_type_get_list_length(context):
     c = Client(None, logger_name=context)
     with pytest.raises(TypeError):
         c.get_list_length(42)
+
 
 def test_bad_type_poll_list_length(context):
     c = Client(None, logger_name=context)
@@ -789,6 +862,7 @@ def test_bad_type_poll_list_length(context):
     with pytest.raises(TypeError):
         c.poll_list_length(name, len, pollfreq, "not an integer")
 
+
 def test_bad_type_poll_list_length_gte(context):
     c = Client(None, logger_name=context)
     name = "mylist"
@@ -803,6 +877,7 @@ def test_bad_type_poll_list_length_gte(context):
         c.poll_list_length_gte(name, len, "not an integer", num_tries)
     with pytest.raises(TypeError):
         c.poll_list_length_gte(name, len, pollfreq, "not an integer")
+
 
 def test_bad_type_poll_list_length_lte(context):
     c = Client(None, logger_name=context)
@@ -819,10 +894,12 @@ def test_bad_type_poll_list_length_lte(context):
     with pytest.raises(TypeError):
         c.poll_list_length_lte(name, len, pollfreq, "not an integer")
 
+
 def test_bad_type_get_datasets_from_list(context):
     c = Client(None, logger_name=context)
     with pytest.raises(TypeError):
         c.get_datasets_from_list(42)
+
 
 def test_bad_type_get_dataset_list_range(context):
     c = Client(None, logger_name=context)
@@ -836,17 +913,18 @@ def test_bad_type_get_dataset_list_range(context):
     with pytest.raises(TypeError):
         c.get_dataset_list_range(listname, start_index, "not an integer")
 
+
 def test_bad_type_set_model_chunk_size(context):
     c = Client(None, logger_name=context)
     with pytest.raises(TypeError):
         c.set_model_chunk_size("not an integer")
 
+
 #####
 # Test type errors from bad parameter types to logging calls
 
-@pytest.mark.parametrize("log_fn", [
-    (log_data,), (log_warning,), (log_error,)
-])
+
+@pytest.mark.parametrize("log_fn", [(log_data,), (log_warning,), (log_error,)])
 def test_bad_type_log_function(context, log_fn):
     c = Client(None, logger_name=context)
     with pytest.raises(TypeError):
@@ -855,6 +933,7 @@ def test_bad_type_log_function(context, log_fn):
         log_fn("test_bad_type_log_function", "Not a logging level", "Data to be logged")
     with pytest.raises(TypeError):
         log_fn("test_bad_type_log_function", LLInfo, 42)
+
 
 def test_bad_type_client_log(context):
     c = Client(None, logger_name=context)
@@ -871,6 +950,7 @@ def test_bad_type_client_log(context):
     with pytest.raises(TypeError):
         c.log_error(LLInfo, 42)
 
+
 def test_bad_type_dataset_log(context):
     d = Dataset(context)
     with pytest.raises(TypeError):
@@ -885,6 +965,7 @@ def test_bad_type_dataset_log(context):
         d.log_warning(LLInfo, 42)
     with pytest.raises(TypeError):
         d.log_error(LLInfo, 42)
+
 
 def test_bad_type_logcontext_log(context):
     lc = LogContext(context)
@@ -901,12 +982,15 @@ def test_bad_type_logcontext_log(context):
     with pytest.raises(TypeError):
         lc.log_error(LLInfo, 42)
 
+
 #####
 # Test type errors from bad parameter types to Dataset API calls
+
 
 def test_bad_type_dataset():
     with pytest.raises(TypeError):
         d = Dataset(42)
+
 
 def test_bad_type_add_tensor():
     d = Dataset("test-dataset")
@@ -934,8 +1018,7 @@ def test_set_data_wrong_type():
 
 
 def test_add_tensor_wrong_type():
-    """A call to Dataset.add_tensor is made with the wrong type
-    """
+    """A call to Dataset.add_tensor is made with the wrong type"""
     d = Dataset("test_dataset")
     data = np.array([1, 2, 3, 4])
     with pytest.raises(TypeError):
@@ -943,27 +1026,26 @@ def test_add_tensor_wrong_type():
     with pytest.raises(TypeError):
         d.add_tensor("tensorname", 42)
 
+
 def test_get_tensor_wrong_type():
-    """A call to Dataset.get_tensor is made with the wrong type
-    """
+    """A call to Dataset.get_tensor is made with the wrong type"""
     d = Dataset("test_dataset")
     with pytest.raises(TypeError):
         d.get_tensor(42)
 
 
 def test_add_meta_scalar_wrong_type():
-    """A call to Dataset.add_meta_scalar is made with the wrong type
-    """
+    """A call to Dataset.add_meta_scalar is made with the wrong type"""
     d = Dataset("test_dataset")
     data = np.array([1, 2, 3, 4])
     with pytest.raises(TypeError):
         d.add_meta_scalar(42, 42)
     with pytest.raises(TypeError):
-        d.add_meta_scalar("scalarname", data) # array, not scalar
+        d.add_meta_scalar("scalarname", data)  # array, not scalar
+
 
 def test_add_meta_string_wrong_type():
-    """A call to Dataset.add_meta_string is made with the wrong type
-    """
+    """A call to Dataset.add_meta_string is made with the wrong type"""
     d = Dataset("test_dataset")
     with pytest.raises(TypeError):
         d.add_meta_string(42, "metastring")
@@ -972,61 +1054,62 @@ def test_add_meta_string_wrong_type():
 
 
 def test_get_meta_scalars_wrong_type():
-    """A call to Dataset.get_meta_scalars is made with the wrong type
-    """
+    """A call to Dataset.get_meta_scalars is made with the wrong type"""
     d = Dataset("test_dataset")
     with pytest.raises(TypeError):
         d.get_meta_scalars(42)
 
 
 def test_get_meta_strings_wrong_type():
-    """A call to Dataset.get_meta_strings is made with the wrong type
-    """
+    """A call to Dataset.get_meta_strings is made with the wrong type"""
     d = Dataset("test_dataset")
     with pytest.raises(TypeError):
         d.get_meta_strings(42)
 
+
 def test_get_tensor_type_wrong_type():
-    """A call to Dataset.get_tensor_type is made with the wrong type
-    """
+    """A call to Dataset.get_tensor_type is made with the wrong type"""
     d = Dataset("test_dataset")
     with pytest.raises(TypeError):
         d.get_tensor_type(42)
 
+
 def test_get_metadata_field_type_wrong_type():
-    """A call to Dataset.get_metadata_field_type is made with the wrong type
-    """
+    """A call to Dataset.get_metadata_field_type is made with the wrong type"""
     d = Dataset("test_dataset")
     with pytest.raises(TypeError):
         d.get_metadata_field_type(42)
 
+
 def test_from_string_wrong_type():
-    """A call to Dataset.get_metadata_field_type is made with the wrong type
-    """
+    """A call to Dataset.get_metadata_field_type is made with the wrong type"""
     with pytest.raises(TypeError):
         Dtypes.from_string("Incorrect input")
 
+
 def test_metadata_from_numpy_wrong_type():
-    """A call to Dataset.add_meta_scalar is made with the wrong type
-    """
+    """A call to Dataset.add_meta_scalar is made with the wrong type"""
     array = np.array(["Incorrect Input"])
     with pytest.raises(TypeError):
         Dtypes.metadata_from_numpy(array)
 
+
 def test_get_tensor_names_wrong_type():
-    """A call to Dataset.get_tensor_names is made with the wrong type
-    """
+    """A call to Dataset.get_tensor_names is made with the wrong type"""
     d = Dataset("test_dataset")
     with pytest.raises(TypeError):
         d.get_tensor_names(42)
 
+
 #####
 # Test type errors from bad parameter types to ConfigOptions API calls
+
 
 def test_create_from_environment_wrong_type():
     """Ensure create_from_environment doesn't accept an invalid db_prefix param"""
     with pytest.raises(TypeError):
         _ = ConfigOptions.create_from_environment(42)
+
 
 def test_get_integer_option_wrong_type(cfg_opts: ConfigOptions):
     """Ensure get_integer_option raises an exception on an invalid key type"""
@@ -1034,15 +1117,18 @@ def test_get_integer_option_wrong_type(cfg_opts: ConfigOptions):
     with pytest.raises(TypeError):
         _ = cfg_opts.get_integer_option(42)
 
+
 def test_get_string_option_wrong_type(cfg_opts: ConfigOptions):
     """Ensure get_string_option raises an exception on an invalid key type"""
     with pytest.raises(TypeError):
         _ = cfg_opts.get_string_option(42)
 
+
 def test_is_configured_wrong_type(cfg_opts: ConfigOptions):
     """Ensure is_configured raises an exception on an invalid key type"""
     with pytest.raises(TypeError):
         _ = cfg_opts.is_configured(42)
+
 
 def test_override_integer_option_wrong_type(cfg_opts: ConfigOptions):
     """Ensure override_integer_option raises an exception on an invalid key type
@@ -1056,6 +1142,7 @@ def test_override_integer_option_wrong_type(cfg_opts: ConfigOptions):
     value = "stringval"
     with pytest.raises(TypeError):
         _ = cfg_opts.override_integer_option(key, value)
+
 
 def test_override_string_option_wrong_type(cfg_opts: ConfigOptions):
     """Ensure override_string_option raises an exception on an invalid key type
@@ -1071,8 +1158,10 @@ def test_override_string_option_wrong_type(cfg_opts: ConfigOptions):
     with pytest.raises(TypeError):
         _ = cfg_opts.override_string_option(key, value)
 
+
 ####
 # Utility functions
+
 
 def bad_function(data):
     """Bad function which only raises an exception"""

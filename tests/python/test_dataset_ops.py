@@ -25,6 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import os
+
 import numpy as np
 import pytest
 from smartredis import Client, Dataset
@@ -124,22 +125,19 @@ def test_delete_dataset(context):
 
 
 def test_rename_nonexisting_dataset(context):
-
     client = Client(None, logger_name=context)
     with pytest.raises(RedisReplyError):
         client.rename_dataset("not-a-tensor", "still-not-a-tensor")
 
 
 def test_copy_nonexistant_dataset(context):
-
     client = Client(None, logger_name=context)
     with pytest.raises(RedisReplyError):
         client.copy_dataset("not-a-tensor", "still-not-a-tensor")
 
 
 def test_dataset_get_name():
-    """Test getting a dataset name
-    """
+    """Test getting a dataset name"""
     dataset = Dataset("test-dataset")
     name = dataset.get_name()
     assert name == "test-dataset"

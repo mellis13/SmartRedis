@@ -32,7 +32,6 @@ from .error import RedisRuntimeError
 from .smartredisPy import PyConfigOptions
 from .util import exception_handler, typecheck
 
-
 if t.TYPE_CHECKING:
     from typing_extensions import ParamSpec
 

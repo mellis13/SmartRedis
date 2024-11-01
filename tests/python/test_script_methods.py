@@ -24,18 +24,20 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import pytest
 import inspect
 import os.path as osp
 from os import environ
+
 import numpy as np
+import pytest
 import torch
 from smartredis import Client
 
 file_path = osp.dirname(osp.abspath(__file__))
 
 
-test_gpu = environ.get("SR_TEST_DEVICE","cpu").lower() == "gpu"
+test_gpu = environ.get("SR_TEST_DEVICE", "cpu").lower() == "gpu"
+
 
 def test_set_get_function(context):
     c = Client(None, logger_name=context)
@@ -97,24 +99,22 @@ def test_run_script_list(context):
         out, expected, "Returned array from script not equal to expected result"
     )
 
-@pytest.mark.skipif(
-    not test_gpu,
-    reason="SR_TEST_DEVICE does not specify 'gpu'"
-)
+
+@pytest.mark.skipif(not test_gpu, reason="SR_TEST_DEVICE does not specify 'gpu'")
 def test_run_script_multigpu_str(use_cluster, context):
     data = np.array([[1, 2, 3, 4, 5]])
 
     c = Client(None, use_cluster, logger_name=context)
     c.put_tensor("script-test-data", data)
     c.set_function_multigpu("one-to-one", one_to_one, 0, 2)
-    c.run_script_multigpu("one-to-one", "one_to_one", "script-test-data", "script-test-out", 0, 0, 2)
+    c.run_script_multigpu(
+        "one-to-one", "one_to_one", "script-test-data", "script-test-out", 0, 0, 2
+    )
     out = c.get_tensor("script-test-out")
     assert out == 5
 
-@pytest.mark.skipif(
-    not test_gpu,
-    reason="SR_TEST_DEVICE does not specify 'gpu'"
-)
+
+@pytest.mark.skipif(not test_gpu, reason="SR_TEST_DEVICE does not specify 'gpu'")
 def test_run_script_multigpu_list(use_cluster, context):
     data = np.array([[1, 2, 3, 4]])
     data_2 = np.array([[5, 6, 7, 8]])
@@ -130,7 +130,7 @@ def test_run_script_multigpu_list(use_cluster, context):
         ["srpt-multi-out-output"],
         0,
         0,
-        2
+        2,
     )
     out = c.get_tensor("srpt-multi-out-output")
     expected = np.array([4, 8])

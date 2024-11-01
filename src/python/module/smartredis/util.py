@@ -28,8 +28,8 @@ import typing as t
 from functools import wraps
 
 import numpy as np
-from . import error
 
+from . import error
 from .smartredisPy import RedisReplyError as PybindRedisReplyError
 from .smartredisPy import c_get_last_error_location
 

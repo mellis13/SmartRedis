@@ -198,15 +198,13 @@ class DatasetConverter:
             # Extract dimensions in correct form
             dims_final = [
                 dataset.get_meta_strings(dim_field_name)[0]
-                for dim_field_name
-                in get_data(dataset, variable_name, "dim")
+                for dim_field_name in get_data(dataset, variable_name, "dim")
             ]
 
             # Extract attributes in correct form
             attrs_final = {
                 attr_field_name: dataset.get_meta_strings(attr_field_name)[0]
-                for attr_field_name
-                in get_data(dataset, variable_name, "attr")
+                for attr_field_name in get_data(dataset, variable_name, "attr")
             }
 
             # Add coordinates to the correct data name

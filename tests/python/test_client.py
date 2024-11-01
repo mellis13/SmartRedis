@@ -25,9 +25,10 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import os
-import pytest
 
+import pytest
 from smartredis import Client, ConfigOptions
+
 
 def test_serialization(context):
     c = Client(None, logger_name=context)
@@ -45,6 +46,7 @@ def test_address(context):
     # check if SSDB was set anyway
     assert os.environ["SSDB"] == ssdb
 
+
 # Globals for Client constructor testing
 ac_original = Client._Client__address_construction
 sc_original = Client._Client__standard_construction
@@ -52,34 +54,45 @@ cluster_mode = os.environ["SR_DB_TYPE"] == "Clustered"
 target_address = os.environ["SSDB"]
 co_envt = ConfigOptions.create_from_environment("")
 
+
 @pytest.mark.parametrize(
-    "args, kwargs, expected_constructor", [
-    # address constructions
-    [(False,), {}, "address"],
-    [(False,), {"address": target_address}, "address"],
-    [(False,), {"address": target_address, "logger_name": "log_name"}, "address"],
-    [(False,), {"logger_name": "log_name"}, "address"],
-    [(False, target_address), {}, "address"],
-    [(False, target_address), {"logger_name": "log_name"}, "address"],
-    [(False, target_address, "log_name"), {}, "address"],
-    [(), {"cluster": cluster_mode}, "address"],
-    [(), {"cluster": cluster_mode, "address": target_address}, "address"],
-    [(), {"cluster": cluster_mode, "address": target_address, "logger_name": "log_name"}, "address"],
-    [(), {"cluster": cluster_mode, "logger_name": "log_name"}, "address"],
-    # standard constructions
-    [(None,), {}, "standard"],
-    [(None,), {"logger_name": "log_name"}, "standard"],
-    [(None, "log_name"), {}, "standard"],
-    [(co_envt,), {}, "standard"],
-    [(co_envt,), {"logger_name": "log_name"}, "standard"],
-    [(co_envt, "log_name"), {}, "standard"],
-    [(), {}, "standard"],
-    [(), {"config_options": None}, "standard"],
-    [(), {"config_options": None, "logger_name": "log_name"}, "standard"],
-    [(), {"config_options": co_envt}, "standard"],
-    [(), {"config_options": co_envt, "logger_name": "log_name"}, "standard"],
-    [(), {"logger_name": "log_name"}, "standard"],
-])
+    "args, kwargs, expected_constructor",
+    [
+        # address constructions
+        [(False,), {}, "address"],
+        [(False,), {"address": target_address}, "address"],
+        [(False,), {"address": target_address, "logger_name": "log_name"}, "address"],
+        [(False,), {"logger_name": "log_name"}, "address"],
+        [(False, target_address), {}, "address"],
+        [(False, target_address), {"logger_name": "log_name"}, "address"],
+        [(False, target_address, "log_name"), {}, "address"],
+        [(), {"cluster": cluster_mode}, "address"],
+        [(), {"cluster": cluster_mode, "address": target_address}, "address"],
+        [
+            (),
+            {
+                "cluster": cluster_mode,
+                "address": target_address,
+                "logger_name": "log_name",
+            },
+            "address",
+        ],
+        [(), {"cluster": cluster_mode, "logger_name": "log_name"}, "address"],
+        # standard constructions
+        [(None,), {}, "standard"],
+        [(None,), {"logger_name": "log_name"}, "standard"],
+        [(None, "log_name"), {}, "standard"],
+        [(co_envt,), {}, "standard"],
+        [(co_envt,), {"logger_name": "log_name"}, "standard"],
+        [(co_envt, "log_name"), {}, "standard"],
+        [(), {}, "standard"],
+        [(), {"config_options": None}, "standard"],
+        [(), {"config_options": None, "logger_name": "log_name"}, "standard"],
+        [(), {"config_options": co_envt}, "standard"],
+        [(), {"config_options": co_envt, "logger_name": "log_name"}, "standard"],
+        [(), {"logger_name": "log_name"}, "standard"],
+    ],
+)
 def test_client_constructor(args, kwargs, expected_constructor, monkeypatch):
     ac_got_called = False
     sc_got_called = False
@@ -96,9 +109,11 @@ def test_client_constructor(args, kwargs, expected_constructor, monkeypatch):
         return sc_original(*a, **kw)
 
     monkeypatch.setattr(
-        Client, "_Client__address_construction", mock_address_constructor)
+        Client, "_Client__address_construction", mock_address_constructor
+    )
     monkeypatch.setattr(
-        Client, "_Client__standard_construction", mock_standard_constructor)
+        Client, "_Client__standard_construction", mock_standard_constructor
+    )
 
     Client(*args, **kwargs)
 

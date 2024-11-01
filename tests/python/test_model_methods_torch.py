@@ -25,14 +25,15 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import os
-
-import torch
-import pytest
 from os import environ
+
+import pytest
+import torch
 from smartredis import Client
 from smartredis.error import *
 
-test_gpu = environ.get("SR_TEST_DEVICE","cpu").lower() == "gpu"
+test_gpu = environ.get("SR_TEST_DEVICE", "cpu").lower() == "gpu"
+
 
 def test_set_model(mock_model, context):
     model = mock_model.create_torch_cnn()
@@ -74,6 +75,7 @@ def test_torch_inference(mock_model, context):
     out_data = c.get_tensor("torch_cnn_output")
     assert out_data.shape == (1, 1, 1, 1)
 
+
 def test_batch_exceptions(mock_model, context):
     # get model and set into database
     mock_model.create_torch_cnn(filepath="./torch_cnn.pt")
@@ -84,113 +86,199 @@ def test_batch_exceptions(mock_model, context):
     min_batch_timeout = 1
     with pytest.raises(RedisRuntimeError):
         c.set_model_from_file(
-            "file_cnn", "./torch_cnn.pt", "TORCH", "CPU",
-            batch_size=0, min_batch_size=0, min_batch_timeout=min_batch_timeout
+            "file_cnn",
+            "./torch_cnn.pt",
+            "TORCH",
+            "CPU",
+            batch_size=0,
+            min_batch_size=0,
+            min_batch_timeout=min_batch_timeout,
         )
     with pytest.raises(RedisRuntimeError):
         c.set_model_from_file(
-            "file_cnn", "./torch_cnn.pt", "TORCH", "CPU",
-            batch_size=0, min_batch_size=min_batch_size, min_batch_timeout=0
+            "file_cnn",
+            "./torch_cnn.pt",
+            "TORCH",
+            "CPU",
+            batch_size=0,
+            min_batch_size=min_batch_size,
+            min_batch_timeout=0,
         )
     with pytest.raises(RedisRuntimeError):
         c.set_model_from_file(
-            "file_cnn", "./torch_cnn.pt", "TORCH", "CPU",
-            batch_size=batch_size, min_batch_size=0, min_batch_timeout=min_batch_timeout
+            "file_cnn",
+            "./torch_cnn.pt",
+            "TORCH",
+            "CPU",
+            batch_size=batch_size,
+            min_batch_size=0,
+            min_batch_timeout=min_batch_timeout,
         )
     with pytest.raises(RedisRuntimeError):
         c.set_model_from_file_multigpu(
-            "file_cnn", "./torch_cnn.pt", "TORCH", 1, 1,
-            batch_size=0, min_batch_size=0, min_batch_timeout=min_batch_timeout
+            "file_cnn",
+            "./torch_cnn.pt",
+            "TORCH",
+            1,
+            1,
+            batch_size=0,
+            min_batch_size=0,
+            min_batch_timeout=min_batch_timeout,
         )
     with pytest.raises(RedisRuntimeError):
         c.set_model_from_file_multigpu(
-            "file_cnn", "./torch_cnn.pt", "TORCH", 1, 1,
-            batch_size=0, min_batch_size=min_batch_size, min_batch_timeout=0
+            "file_cnn",
+            "./torch_cnn.pt",
+            "TORCH",
+            1,
+            1,
+            batch_size=0,
+            min_batch_size=min_batch_size,
+            min_batch_timeout=0,
         )
     with pytest.raises(RedisRuntimeError):
         c.set_model_from_file_multigpu(
-            "file_cnn", "./torch_cnn.pt", "TORCH", 1, 1,
-            batch_size=batch_size, min_batch_size=0, min_batch_timeout=min_batch_timeout
+            "file_cnn",
+            "./torch_cnn.pt",
+            "TORCH",
+            1,
+            1,
+            batch_size=batch_size,
+            min_batch_size=0,
+            min_batch_timeout=min_batch_timeout,
         )
     with pytest.raises(RedisRuntimeError):
         c.set_model(
-            "file_cnn", model, "TORCH", "CPU",
-            batch_size=0, min_batch_size=0, min_batch_timeout=min_batch_timeout
+            "file_cnn",
+            model,
+            "TORCH",
+            "CPU",
+            batch_size=0,
+            min_batch_size=0,
+            min_batch_timeout=min_batch_timeout,
         )
     with pytest.raises(RedisRuntimeError):
         c.set_model(
-            "file_cnn", model, "TORCH", "CPU",
-            batch_size=0, min_batch_size=min_batch_size, min_batch_timeout=0
+            "file_cnn",
+            model,
+            "TORCH",
+            "CPU",
+            batch_size=0,
+            min_batch_size=min_batch_size,
+            min_batch_timeout=0,
         )
     with pytest.raises(RedisRuntimeError):
         c.set_model(
-            "file_cnn", model, "TORCH", "CPU",
-            batch_size=batch_size, min_batch_size=0, min_batch_timeout=min_batch_timeout
+            "file_cnn",
+            model,
+            "TORCH",
+            "CPU",
+            batch_size=batch_size,
+            min_batch_size=0,
+            min_batch_timeout=min_batch_timeout,
         )
     with pytest.raises(RedisRuntimeError):
         c.set_model_multigpu(
-            "file_cnn", model, "TORCH", 1, 1,
-            batch_size=0, min_batch_size=0, min_batch_timeout=min_batch_timeout
+            "file_cnn",
+            model,
+            "TORCH",
+            1,
+            1,
+            batch_size=0,
+            min_batch_size=0,
+            min_batch_timeout=min_batch_timeout,
         )
     with pytest.raises(RedisRuntimeError):
         c.set_model_multigpu(
-            "file_cnn", model, "TORCH", 1, 1,
-            batch_size=0, min_batch_size=min_batch_size, min_batch_timeout=0
+            "file_cnn",
+            model,
+            "TORCH",
+            1,
+            1,
+            batch_size=0,
+            min_batch_size=min_batch_size,
+            min_batch_timeout=0,
         )
     with pytest.raises(RedisRuntimeError):
         c.set_model_multigpu(
-            "file_cnn", model, "TORCH", 1, 1,
-            batch_size=batch_size, min_batch_size=0, min_batch_timeout=min_batch_timeout
+            "file_cnn",
+            model,
+            "TORCH",
+            1,
+            1,
+            batch_size=batch_size,
+            min_batch_size=0,
+            min_batch_timeout=min_batch_timeout,
         )
+
 
 def test_batch_warning_set_model_from_file(mock_model, context, capfd):
     # get model and set into database
     mock_model.create_torch_cnn(filepath="./torch_cnn.pt")
     c = Client(None, logger_name=context)
     c.set_model_from_file(
-        "file_cnn", "./torch_cnn.pt", "TORCH", "CPU",
-        batch_size=1, min_batch_size=1, min_batch_timeout=0
+        "file_cnn",
+        "./torch_cnn.pt",
+        "TORCH",
+        "CPU",
+        batch_size=1,
+        min_batch_size=1,
+        min_batch_timeout=0,
     )
     captured = capfd.readouterr()
     assert "WARNING" in captured.err
 
-@pytest.mark.skipif(
-    not test_gpu,
-    reason="SR_TEST_DEVICE does not specify 'gpu'"
-)
+
+@pytest.mark.skipif(not test_gpu, reason="SR_TEST_DEVICE does not specify 'gpu'")
 def test_batch_warning_set_model_from_file_multigpu(mock_model, context, capfd):
     # get model and set into database
     mock_model.create_torch_cnn(filepath="./torch_cnn.pt")
     c = Client(None, logger_name=context)
     c.set_model_from_file_multigpu(
-        "file_cnn", "./torch_cnn.pt", "TORCH", 1, 1,
-        batch_size=1, min_batch_size=1, min_batch_timeout=0
+        "file_cnn",
+        "./torch_cnn.pt",
+        "TORCH",
+        1,
+        1,
+        batch_size=1,
+        min_batch_size=1,
+        min_batch_timeout=0,
     )
     captured = capfd.readouterr()
     assert "WARNING" in captured.err
+
 
 def test_batch_warning_set_model(mock_model, context, capfd):
     # get model and set into database
     model = mock_model.create_torch_cnn()
     c = Client(None, logger_name=context)
     c.set_model(
-        "file_cnn", model, "TORCH", "CPU",
-        batch_size=1, min_batch_size=1, min_batch_timeout=0
+        "file_cnn",
+        model,
+        "TORCH",
+        "CPU",
+        batch_size=1,
+        min_batch_size=1,
+        min_batch_timeout=0,
     )
     captured = capfd.readouterr()
     assert "WARNING" in captured.err
 
-@pytest.mark.skipif(
-    not test_gpu,
-    reason="SR_TEST_DEVICE does not specify 'gpu'"
-)
+
+@pytest.mark.skipif(not test_gpu, reason="SR_TEST_DEVICE does not specify 'gpu'")
 def test_batch_warning_set_model_multigpu(mock_model, context, capfd):
     # get model and set into database
     model = mock_model.create_torch_cnn()
     c = Client(None, logger_name=context)
     c.set_model_multigpu(
-        "file_cnn", model, "TORCH", 1, 1,
-        batch_size=1, min_batch_size=1, min_batch_timeout=0
+        "file_cnn",
+        model,
+        "TORCH",
+        1,
+        1,
+        batch_size=1,
+        min_batch_size=1,
+        min_batch_timeout=0,
     )
     captured = capfd.readouterr()
     assert "WARNING" in captured.err
