@@ -31,6 +31,7 @@ from smartredis import Client
 
 # ----- Tests -----------------------------------------------------------
 
+
 def test_bytes_exist(mock_data, context):
     """Test that raw bytes exist in the database
     after a put operation"""
@@ -47,6 +48,7 @@ def test_bytes_exist(mock_data, context):
 
     # Assert that the bytes are present in the database
     assert client.bytes_exists("python_bytes_exist")
+
 
 def test_put_get_bytes(mock_data, context):
     """Test put/get_bytes for byte array"""
@@ -67,6 +69,7 @@ def test_put_get_bytes(mock_data, context):
     # Assert equal values
     assert bytes.getvalue() == retrieved_bytes.getvalue()
 
+
 def test_poll_bytes(mock_data, context):
     """Test that raw bytes are polled correctly"""
 
@@ -85,6 +88,7 @@ def test_poll_bytes(mock_data, context):
 
     # Assert polling returns true after put
     assert client.poll_bytes("python_bytes_poll", 1, 5) == True
+
 
 def test_delete_bytes(mock_data, context):
     """Test that raw bytes can be removed from
