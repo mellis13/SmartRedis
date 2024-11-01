@@ -25,73 +25,86 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import io
-import os
 
 import numpy as np
 from smartredis import Client
 
 # ----- Tests -----------------------------------------------------------
 
-
-def test_put_get_bytes(mock_data, context):
-    """Test put/get_tensor for 1D numpy arrays"""
-
-    client = Client(None, logger_name=context)
-
-    data = np.random.rand(2, 8, 4, 2, 30)
-    bytes = io.BytesIO(data.tobytes())
-
-    client.put_bytes("python_bytes", bytes)
-
-    retrieved_bytes = client.get_bytes("python_bytes")
-
-    assert bytes.getvalue() == retrieved_bytes.getvalue()
-
-
 def test_bytes_exist(mock_data, context):
     """Test that raw bytes exist in the database
     after a put operation"""
 
+    # Create a client
     client = Client(None, logger_name=context)
 
+    # Initialize test data
     data = np.random.rand(2, 8, 4, 2, 30)
     bytes = io.BytesIO(data.tobytes())
 
+    # Put data as raw bytes
     client.put_bytes("python_bytes_exist", bytes)
 
+    # Assert that the bytes are present in the database
     assert client.bytes_exists("python_bytes_exist")
 
+def test_put_get_bytes(mock_data, context):
+    """Test put/get_bytes for byte array"""
+
+    # Create a client
+    client = Client(None, logger_name=context)
+
+    # Initialize test data
+    data = np.random.rand(2, 8, 4, 2, 30)
+    bytes = io.BytesIO(data.tobytes())
+
+    # Put data as raw bytes
+    client.put_bytes("python_put_get_bytes", bytes)
+
+    # Retrieve the bytes
+    retrieved_bytes = client.get_bytes("python_put_get_bytes")
+
+    # Assert equal values
+    assert bytes.getvalue() == retrieved_bytes.getvalue()
 
 def test_poll_bytes(mock_data, context):
     """Test that raw bytes are polled correctly"""
 
+    # Create a client
     client = Client(None, logger_name=context)
 
+    # Assert that the data does not exist before being put
     assert client.poll_bytes("python_bytes_poll", 1, 5) == False
 
+    # Inititalize test data
     data = np.random.rand(2, 8, 4, 2, 30)
     bytes = io.BytesIO(data.tobytes())
 
+    # Put data as raw bytes
     client.put_bytes("python_bytes_poll", bytes)
 
-    assert client.bytes_exists("python_bytes_exist")
-
+    # Assert polling returns true after put
     assert client.poll_bytes("python_bytes_poll", 1, 5) == True
 
-
 def test_delete_bytes(mock_data, context):
-    """Test that raw bytes exist in the database
-    after a put operation"""
+    """Test that raw bytes can be removed from
+    the database after a put operation"""
 
+    # Create a client
     client = Client(None, logger_name=context)
 
+    # Inititalize test data
     data = np.random.rand(2, 8, 4, 2, 30)
     bytes = io.BytesIO(data.tobytes())
 
+    # Put data as raw bytes
     client.put_bytes("python_bytes_deleted", bytes)
 
+    # Assert that the bytes exist after put
     assert client.bytes_exists("python_bytes_deleted")
 
+    # Delete the bytes from the database
     client.delete_bytes("python_bytes_deleted")
 
+    # Assert the bytes no longer exist
     assert not client.bytes_exists("python_bytes_deleted")
