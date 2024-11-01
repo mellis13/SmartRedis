@@ -478,7 +478,8 @@ SCENARIO("Testing Tensor Functions on Client Object", "[Client]")
 
 SCENARIO("Testing Bytes Functions on Client Object", "[Client]")
 {
-    std::cout << std::to_string(get_time_offset()) << ": Testing Bytes Functions on Client Object" << std::endl;
+    std::cout << std::to_string(get_time_offset()) 
+              << ": Testing Bytes Functions on Client Object" << std::endl;
     std::string context("test_bytes");
     log_data(context, LLDebug, "***Beginning Client bytes testing***");
     GIVEN("A Client object")
@@ -488,7 +489,7 @@ SCENARIO("Testing Bytes Functions on Client Object", "[Client]")
         AND_WHEN("A byte string is create and put by the client into the database")
         {
             const size_t n_bytes = 5;
-            unsigned char bytes_value[n_bytes] = {0x48, 0x65, 0x6C, 0x6C, 0x6F};
+            unsigned char bytes_value[n_bytes] = {0x00, 0x65, 0x6C, 0x6C, 0x6F};
             std::string bytes_name = "byte_string_1";
 
             client.put_bytes(bytes_name, &bytes_value, n_bytes);
