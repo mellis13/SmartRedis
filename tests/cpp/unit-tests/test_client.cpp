@@ -528,10 +528,12 @@ SCENARIO("Testing Bytes Functions on Client Object", "[Client]")
 
             THEN("The bytes can be retrieved by clients.unpack_bytes()")
             {
-                size_t retrieved_n_bytes = n_bytes;
+                size_t retrieved_n_bytes = 0;
                 unsigned char* retrieved_bytes_values = (unsigned char*)malloc(n_bytes);
+
                 client.unpack_bytes(bytes_name, 
-                                    retrieved_bytes_values, 
+                                    retrieved_bytes_values,
+                                    n_bytes, 
                                     retrieved_n_bytes);
 
                 CHECK(retrieved_bytes_values != NULL);

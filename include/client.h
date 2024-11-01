@@ -246,7 +246,7 @@ class Client : public SRObject
         *   \details The key used to locate the stored bytes
         *            may be formed by applying a prefix to the supplied
         *            name. See set_data_source()
-        *            and use_tensor_ensemble_prefix() for more details.
+        *            and use_bytes_ensemble_prefix() for more details.
         *            Unlike other "get" operations in the client, the
         *            the byte data memeory is allocated but not managed
         *            by the client.  The caller is responsible for invoking
@@ -271,16 +271,21 @@ class Client : public SRObject
         *            and use_bytes_ensemble_prefix() for more details.
         *   \param name The name for referencing the bytes in the database
         *   \param data A buffer into which to place byte data
-        *   \param n_bytes The number of bytes in the provided data
-        *   \throw SmartRedis::Exception if unpack bytes command fails
+        *   \param n_bytes The number of bytes in the provided memory block
+        *   \param n_used_bytes The number of bytes in the provided 
+        *                       buffer that were used
+        *   \throw SmartRedis::Exception if unpack bytes command fails or
+        *          the number of provided bytes is less than the retrieved
+        *          number of bytes
         */
         void unpack_bytes(const std::string& name,
                           void* data,
-                          const size_t n_bytes);
+                          const size_t n_bytes,
+                          size_t& n_used_bytes);
 
         /*!
         *   \brief Delete bytes from the database
-        *   \details The bytes key used to locate the bytes to be
+        *   \details The key used to locate the bytes to be
         *            deleted may be formed by applying a prefix to the
         *            supplied name. See set_data_source()
         *            and use_bytes_ensemble_prefix() for more details.
@@ -899,10 +904,10 @@ class Client : public SRObject
 
         /*!
         *   \brief Check if bytes exists in the database
-        *   \details The bytes key used to check for existence
+        *   \details The key used to check for existence
         *            may be formed by applying a prefix to the supplied
         *            name. See set_data_source()
-        *            and use_dataset_ensemble_prefix() for more details.
+        *            and use_bytes_ensemble_prefix() for more details.
         *   \param name The bytes name to be checked in the database
         *   \returns Returns true if the bytes exists in the database
         *   \throw SmartRedis::Exception if bytes exists command fails
@@ -984,7 +989,7 @@ class Client : public SRObject
         /*!
         *   \brief Check if bytes exists in the database, repeating
         *          the check at a specified polling interval
-        *   \details The bytes key used to check for existence
+        *   \details The key used to check for existence
         *            may be formed by applying a prefix to the supplied
         *            name. See set_data_source()
         *            and use_bytes_ensemble_prefix() for more details.
@@ -1109,7 +1114,7 @@ class Client : public SRObject
         void use_list_ensemble_prefix(bool use_prefix);
 
         /*!
-        *   \brief Control whether raw bytes are prefixed
+        *   \brief Control whether bytes are prefixed
         *   \details This function can be used to avoid key collisions in an
         *            ensemble by prepending the string value from the
         *            environment variable SSKEYIN and/or SSKEYOUT to

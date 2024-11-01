@@ -50,8 +50,12 @@ int main(int argc, char* argv[]) {
     throw std::runtime_error("The key does not exist in the database.");
 
   std::vector<char> output_bytes(n_bytes, 0);
+  size_t output_n_bytes = 0;
+  client.unpack_bytes(key, output_bytes.data(), n_bytes, output_n_bytes);
 
-  client.unpack_bytes(key, output_bytes.data(), n_bytes);
+  if (output_n_bytes != n_bytes)
+    std::cout<<"Output byte size "<<output_n_bytes<<" does not match."<<std::endl;
+      throw std::exception();
 
   for(int i = 0; i < n_bytes; i++) {
     if (output_bytes[i] != input_bytes[i]) {

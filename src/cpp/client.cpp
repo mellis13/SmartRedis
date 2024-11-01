@@ -383,7 +383,8 @@ void Client::get_bytes(const std::string& name,
 // memory space that has the specified size.
 void Client::unpack_bytes(const std::string& name,
                           void* data,
-                          const size_t n_bytes)
+                          const size_t n_bytes,
+                          size_t& n_used_bytes)
 {
     // Track calls to this API function
     LOG_API_FUNCTION();
@@ -394,13 +395,14 @@ void Client::unpack_bytes(const std::string& name,
     if (reply.has_error())
         throw SRRuntimeException("put_bytes failed");
 
-    if (n_bytes != reply.str_len()) {
+    if (n_bytes < reply.str_len()) {
         throw SRRuntimeException("Provided number of bytes of " + 
                                  std::to_string(n_bytes) + " " +
-                                 "match retrieved data size of " +
+                                 "smaller than retrieved data size of " +
                                  std::to_string(reply.str_len()) + ".");
     }
 
+    n_used_bytes = reply.str_len();
     std::memcpy(data, reply.str(), reply.str_len());
 }
 
