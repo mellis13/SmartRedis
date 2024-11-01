@@ -242,7 +242,6 @@ class Client(SRObject):
         """
 
         typecheck(name, "name", str)
-        # TODO this is a deep copy of the returned bytes object
         return io.BytesIO(self._client.get_bytes(name))
 
     @exception_handler
@@ -265,7 +264,7 @@ class Client(SRObject):
     def delete_bytes(self, name: str) -> None:
         """Delete a bytes from the database
 
-        The bytes key used to locate the bytes to be deleted
+        The key used to locate the bytes to be deleted
         may be formed by applying a prefix to the supplied
         name. See set_data_source()
         and use_bytes_ensemble_prefix() for more details.
@@ -1190,7 +1189,7 @@ class Client(SRObject):
     def bytes_exists(self, name: str) -> bool:
         """Check if bytes exists in the database
 
-        The bytes key used to check for existence
+        The key used to check for existence
         may be formed by applying a prefix to the supplied
         name. See set_data_source()
         and use_bytes_ensemble_prefix() for more details.

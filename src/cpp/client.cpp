@@ -374,11 +374,6 @@ void Client::get_bytes(const std::string& name,
     if (reply.has_error())
         throw SRRuntimeException("put_bytes failed");
 
-    // TODO We don't have a way with CommandReply to transfer ownership of a str() reply
-    // to an outside pointer.  For now we do a naive memcopy, 
-    // but we really shouldn't have to do that
-    // We could set the internal str reply value to NULL and the redisreply destructor
-    // which calls free on it will likely do a no-op, but this isn't proven.
     n_bytes = reply.str_len();
     data = malloc(n_bytes);
     std::memcpy(data, (void*)(reply.str()), n_bytes);

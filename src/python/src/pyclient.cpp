@@ -128,9 +128,6 @@ void PyClient::put_tensor(
 void PyClient::put_bytes(std::string& name, py::object data)
 {
     MAKE_CLIENT_API({
-
-        // This does an implicit copy but it's not clear 
-        // how we can get access to only the data
         std::string bytes_data = data.attr("getvalue")().cast<std::string>();
         _client->put_bytes(name, bytes_data.data(), bytes_data.size());
     });
