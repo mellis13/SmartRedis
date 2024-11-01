@@ -76,10 +76,10 @@ def test_poll_bytes(mock_data, context):
 
     assert client.bytes_exists("python_bytes_exist")
 
-    assert client.poll_bytes("python_bytes_poll", 0.1, 5) == True
+    assert client.poll_bytes("python_bytes_poll", 1, 5) == True
 
 
-def test_remove_bytes(mock_data, context):
+def test_delete_bytes(mock_data, context):
     """Test that raw bytes exist in the database
     after a put operation"""
 
@@ -88,10 +88,10 @@ def test_remove_bytes(mock_data, context):
     data = np.random.rand(2, 8, 4, 2, 30)
     bytes = io.BytesIO(data.tobytes())
 
-    client.put_bytes("python_bytes_removed", bytes)
+    client.put_bytes("python_bytes_deleted", bytes)
 
-    assert client.bytes_exists("python_bytes_removed")
+    assert client.bytes_exists("python_bytes_deleted")
 
-    client.remove_bytes("python_bytes_removed", bytes)
+    client.delete_bytes("python_bytes_deleted", bytes)
 
-    assert not client.bytes_exists("python_bytes_removed")
+    assert not client.bytes_exists("python_bytes_deleted")
