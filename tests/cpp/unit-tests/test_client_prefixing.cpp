@@ -163,8 +163,6 @@ SCENARIO("Testing Client prefixing")
             // Reset environment variables to their original state
             reset_env_vars(old_keyin, old_keyout);
 
-            // Free test memory
-            free(array);
         }
 
     }
